@@ -4,6 +4,12 @@
 
 Composer dock statistics and Magpie subscription quota gauges for [DeepSeek Harness](https://github.com/deepseek-ai/dsh).
 
+## Screenshots
+
+![Composer dock](assets/screenshot-1-dock.png)
+
+![Other model quotas](assets/screenshot-2-other-quotas.png)
+
 ## Features
 
 - **Composer dock controls** (left to right):

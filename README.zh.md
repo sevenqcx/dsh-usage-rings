@@ -4,6 +4,12 @@
 
 为 [DeepSeek Harness](https://github.com/deepseek-ai/dsh) 提供输入框底栏统计控件与本地 Magpie 网关额度监控插件。
 
+## 界面预览
+
+![底栏控件](assets/screenshot-1-dock.png)
+
+![其他模型额度柱状表](assets/screenshot-2-other-quotas.png)
+
 ## 功能
 
 - **底栏左侧统计控件**（从左到右）：
