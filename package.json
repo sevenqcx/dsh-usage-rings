@@ -1,0 +1,67 @@
+{
+  "name": "dsh-usage-rings",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Composer dock stats (context, cache hit, Tok/s, per-model token usage) and Codex/Gemini/Magpie quota gauges for DeepSeek Harness.",
+  "license": "MIT",
+  "author": "Seven7cx",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sevenqcx/dsh-usage-rings.git"
+  },
+  "homepage": "https://github.com/sevenqcx/dsh-usage-rings#readme",
+  "bugs": {
+    "url": "https://github.com/sevenqcx/dsh-usage-rings/issues"
+  },
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "dsh-plugin",
+    "usage",
+    "quota",
+    "magpie"
+  ],
+  "engines": {
+    "dsh": ">=0.2.0"
+  },
+  "icon": "icon.svg",
+  "scripts": {
+    "test": "node --test *.test.js"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "README.md",
+    "README.zh.md",
+    "LICENSE",
+    "assets/icon-180.png",
+    "index.js",
+    "quotas.js",
+    "magpie-routes.js",
+    "reset-cards.js",
+    "usage-by-model.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  }
+}

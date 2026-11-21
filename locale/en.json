@@ -1,0 +1,1 @@
+{ "meta": { "title": "Usage Rings", "description": "Replaces composer dock stats with context, cache-hit, Tok/s, and per-model usage panels, plus Codex, Gemini, and multi-provider quota gauges read from a local Magpie gateway (127.0.0.1:3425)." } }
