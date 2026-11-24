@@ -281,6 +281,8 @@ window.__ModuleLoader__.load({
       return restHours ? `${days}天${restHours}小时` : `${days}天`;
     };
 
+    const unitLabel = (u) => ({ credits: ' 积分', credit: ' 积分', h: ' 小时', hours: ' 小时', hr: ' 小时' }[String(u).trim().toLowerCase()] ?? u);
+
     const windowLabel = (name) => name
       .replace('Agent hours', '智能体时长')
       .replace('Image generation', '图像生成')
@@ -1218,7 +1220,7 @@ window.__ModuleLoader__.load({
         open && position ? createPortal(h('div', { className: 'ur-panel', ref: panelRef, role: 'dialog', 'aria-label': '其他模型额度', style: panelStyle(position) },
           !Array.isArray(records) ? h('div', { className: 'ur-note' }, requestState === 'error' ? '额度读取失败' : '其他额度暂不可用') :
           records.length === 0 ? h('div', { className: 'ur-note' }, '暂未发现其他额度') :
-          [(() => { const ts = records.map((r) => r.readAt).filter(Boolean).sort().pop(); return ts ? h('div', { className: 'ur-oq-top', key: 'top' }, `${formatReset(ts)} 更新`) : null; })(),
+          [
           h('div', { key: 'grid', className: groups.length === 1 ? 'ur-oq-grid ur-oq-single' : 'ur-oq-grid' },
             groups.map((group, index) => {
               const count = group.items.length;
@@ -1228,7 +1230,7 @@ window.__ModuleLoader__.load({
               const mergeBars = count > 1 && group.items.every((it) => it.kind !== 'balance' && it.status !== 'unavailable' && (it.windows || []).length === 1);
               const barItems = mergeBars
                 ? group.items.map((it, i) => ({ win: it.windows[0], label: it.alias || it.account || `账号 ${i + 1}`, full: [it.alias, it.account].filter(Boolean).join(' · ') }))
-                : (record.windows || []).map((win) => ({ win, label: windowLabel(win.name), full: '' }));
+                : [...(record.windows || [])].sort((a, b) => (b.name === 'Total credits') - (a.name === 'Total credits')).map((win) => ({ win, label: windowLabel(win.name), full: '' }));
               const readTime = record.readAt ? formatReset(record.readAt) : '';
               const resetTimes = [...new Set(barItems.map(({ win }) => formatReset(win.resetsAt)).filter(Boolean))];
               const sharedReset = resetTimes.length === 1 ? resetTimes[0] : '';
@@ -1276,7 +1278,7 @@ window.__ModuleLoader__.load({
                               const displayText = typeof win.display === 'string' ? win.display.replace(/\s*\/\s*/g, '/') : '';
                               // Non-token platforms report concrete usage, e.g. 0.05/10h agent hours.
                               const usageText = Number.isFinite(win.amount) && Number.isFinite(win.limit) && win.limit > 0
-                                ? `${win.amount}/${win.limit}${typeof win.unit === 'string' ? win.unit : ''}`
+                                ? `${win.amount}/${win.limit}${typeof win.unit === 'string' ? unitLabel(win.unit) : ''}`
                                 : '';
                               const name = label;
                               // Unify sub text to remaining: derive total from 'x/total' and show remaining = total*pct.
