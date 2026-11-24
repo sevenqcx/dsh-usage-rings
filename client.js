@@ -153,7 +153,7 @@ window.__ModuleLoader__.load({
 .ur-oq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ur-oq-grid.ur-oq-single{grid-template-columns:minmax(0,1fr)}
 .ur-oq-card{display:flex;flex-direction:column;min-width:0;padding:12px 14px;border:1px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-interactive-bg-hover)}
 .ur-oq-head{display:flex;align-items:center;gap:6px;min-width:0;padding-bottom:8px;border-bottom:1px solid var(--dsw-alias-border-l2)}
-.ur-oq-title{font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ur-oq-account{font-size:11px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.ur-oq-switch{min-width:0;padding:1px 6px;border:1px solid var(--dsw-alias-border-l2);border-radius:999px;background:transparent;font:inherit;font-size:11px;color:var(--dsw-alias-label-secondary);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ur-oq-switch:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
+.ur-oq-title{font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ur-oq-account{font-size:11px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.ur-oq-tabs{display:flex;gap:4px;margin-top:8px;padding:2px;border-radius:8px;background:var(--dsw-alias-interactive-bg-hover)}.ur-oq-tab{flex:1 1 0;min-width:0;padding:4px 8px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:12px;color:var(--dsw-alias-label-secondary);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ur-oq-tab:hover{color:var(--dsw-alias-label-primary)}.ur-oq-tab-on{background:var(--dsw-alias-bg-l1,#fff);color:var(--dsw-alias-label-primary);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .ur-oq-time{margin-left:auto;flex:none;font-size:10px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}
 .ur-oq-bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:8px;align-items:start;margin-top:10px}
 .ur-vcol{display:flex;flex-direction:column;align-items:center;min-width:0}
@@ -1195,21 +1195,26 @@ window.__ModuleLoader__.load({
               const count = group.items.length;
               const pos = Math.min(picked[group.provider] ?? 0, count - 1);
               const record = group.items[pos];
-              const cycle = () => setPicked((prev) => ({ ...prev, [group.provider]: (pos + 1) % count }));
               const readTime = record.readAt ? formatReset(record.readAt) : '';
               const resetTimes = [...new Set((record.windows || []).map((win) => formatReset(win.resetsAt)).filter(Boolean))];
               const sharedReset = resetTimes.length === 1 ? resetTimes[0] : '';
               return h('div', { className: 'ur-oq-card', key: `${record.provider}-${index}` },
                 h('div', { className: 'ur-oq-head' },
                   h('span', { className: 'ur-oq-title' }, providerLabel(record.provider)),
-                  count > 1
-                    ? h('button', { type: 'button', className: 'ur-oq-switch', onClick: cycle, title: `切换账号（${pos + 1}/${count}）`, 'aria-label': `切换 ${providerLabel(record.provider)} 账号，当前第 ${pos + 1} 个，共 ${count} 个` },
-                        `${record.account || `账号 ${pos + 1}`} ⇄ ${pos + 1}/${count}`)
-                    : typeof record.account === 'string' ? h('span', { className: 'ur-oq-account', title: record.account }, record.account) : null,
+                  count === 1 && typeof record.account === 'string' ? h('span', { className: 'ur-oq-account', title: record.account }, record.account) : null,
                   h('span', { className: 'ur-oq-time', title: readTime ? `读取于 ${readTime}` : undefined }, readTime || '时间未知'),
                   record.provider === 'workbuddy'
                     ? h('button', { type: 'button', className: 'ur-checkin', disabled: checkin === 'running', onClick: runCheckin, title: '为所有 WorkBuddy 账号签到', 'aria-label': '为所有 WorkBuddy 账号签到' }, '✓')
                     : null),
+                count > 1
+                  ? h('div', { className: 'ur-oq-tabs', role: 'tablist', 'aria-label': `${providerLabel(record.provider)} 账号` },
+                      group.items.map((item, i) => h('button', {
+                        type: 'button', role: 'tab', key: i, 'aria-selected': i === pos,
+                        className: i === pos ? 'ur-oq-tab ur-oq-tab-on' : 'ur-oq-tab',
+                        title: item.account || `账号 ${i + 1}`,
+                        onClick: () => setPicked((prev) => ({ ...prev, [group.provider]: i })),
+                      }, item.account || `账号 ${i + 1}`)))
+                  : null,
                 record.provider === 'workbuddy' && checkin
                   ? h('div', { className: 'ur-note', role: 'status' }, checkin === 'running' ? '正在请求签到…' : checkin === 'finished' ? '签到命令已完成，请查看额度确认结果' : checkin === 'busy' ? '签到请求正在进行' : '签到命令未完成')
                   : null,
