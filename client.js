@@ -1286,7 +1286,7 @@ window.__ModuleLoader__.load({
                               const winName = windowLabel(win.name);
                               const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? resetLabel(win.resetsAt) : null].filter(Boolean).join(' · ');
                               const rem = (w) => w.remaining ?? (w.used == null ? Infinity : 100 - w.used);
-                              const heroIdx = barItems.reduce((b, it, k) => rem(it.win) < rem(barItems[b].win) ? k : b, 0);
+                              const totalIdx = barItems.findIndex((it) => it.win && it.win.name === 'Total credits'); const heroIdx = totalIdx >= 0 ? totalIdx : barItems.reduce((b, it, k) => rem(it.win) < rem(barItems[b].win) ? k : b, 0);
                               return h('div', { className: 'ur-vcol', key: `${i}-${pctText}`, title: tip, 'data-low': pct !== null && pct <= 10 ? '' : undefined, 'data-hero': i === heroIdx ? '' : undefined },
                                 h('span', { className: 'ur-vcol-pct' }, pctText),
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
