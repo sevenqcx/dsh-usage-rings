@@ -201,6 +201,8 @@ window.__ModuleLoader__.load({
    and baseline. */
 .ur-name,.ur-pct{font:inherit;line-height:inherit;letter-spacing:normal;color:inherit;display:inline-block}
 @media (prefers-reduced-motion:reduce){.ur-item,.ur-item-text,.ur-stats-button,.ur-value{transition:none}.ur-panel,.ur-segbar span,.ur-meter span,.ur-vcol-fill,.ur-arc-val{animation:none}}
+
+/* polish: vertical centering, no overlap with footer, low-quota emphasis */.ur-vcol{grid-template-areas:'name pct' 'sub pct' 'reset reset';align-content:center;row-gap:2px;min-height:46px;padding:8px 12px}.ur-vcol-pct{align-self:center}.ur-vcol:not(:has(.ur-vcol-sub)) .ur-vcol-name{grid-row:1/span 2;align-self:center}.ur-vcol-sub{color:var(--dsw-alias-label-tertiary)}.ur-oq-bars{margin-bottom:14px}.ur-oq-reset{margin-top:auto;padding-top:10px;box-shadow:none;border-top:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-tertiary)}.ur-oq-balance{gap:2px;padding:14px 0 14px}.ur-oq-bal-v{font-size:28px;line-height:34px}.ur-vcol[data-low] .ur-vcol-pct{color:var(--ap-red)}
 `;
 
     const percentOf = (win) => {
@@ -1271,7 +1273,7 @@ window.__ModuleLoader__.load({
                               const name = label;
                               const winName = windowLabel(win.name);
                               const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? resetLabel(win.resetsAt) : null].filter(Boolean).join(' · ');
-                              return h('div', { className: 'ur-vcol', key: `${i}-${pctText}`, title: tip },
+                              return h('div', { className: 'ur-vcol', key: `${i}-${pctText}`, title: tip, 'data-low': pct !== null && pct <= 10 ? '' : undefined },
                                 h('span', { className: 'ur-vcol-pct' }, pctText),
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
                                   h('span', { className: 'ur-vcol-fill', style: { '--p': String(clamped / 100), '--c': pct === null ? 'var(--ap-ter)' : pct <= 10 ? 'var(--ap-red)' : pct <= 30 ? 'var(--ap-orange)' : 'var(--ap-green)' } })),
