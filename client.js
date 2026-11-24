@@ -222,6 +222,22 @@ window.__ModuleLoader__.load({
       return 'var(--dsw-alias-label-secondary)';
     };
 
+    // Countdown to a reset: ≥24h → "X天Y小时", otherwise "X小时Y分" (or "Y分").
+    const formatLeft = (iso) => {
+      const ms = Date.parse(iso ?? '') - Date.now();
+      if (!Number.isFinite(ms) || ms <= 0) return '';
+      const mins = Math.floor(ms / 60000);
+      const d = Math.floor(mins / 1440), hr = Math.floor((mins % 1440) / 60), m = mins % 60;
+      if (d > 0) return hr ? `${d}天${hr}小时` : `${d}天`;
+      if (hr > 0) return m ? `${hr}小时${m}分` : `${hr}小时`;
+      return `${Math.max(1, m)}分`;
+    };
+    const resetLabel = (iso) => {
+      const at = formatReset(iso);
+      if (!at) return '';
+      const left = formatLeft(iso);
+      return left ? `${at} 重置（${left}）` : `${at} 重置`;
+    };
     const formatReset = (iso) => {
       const ts = Date.parse(iso ?? '');
       if (!Number.isFinite(ts)) return '';
@@ -445,7 +461,7 @@ window.__ModuleLoader__.load({
                 ),
                 h('div', { className: 'ur-metric' },
                   h('div', { className: 'ur-metric-value' }, ringPct === null ? '—' : formatPercent(ringPct), blocked && blockedText ? h('span', { className: 'ur-metric-countdown' }, blockedText) : primaryName ? h('span', { className: 'ur-metric-unit' }, primaryName) : null),
-                  h('div', { className: 'ur-feature-note' }, `${headingLabel}${primaryWindow?.resetsAt && formatReset(primaryWindow.resetsAt) ? ` · ${formatReset(primaryWindow.resetsAt)} 重置` : ''}`),
+                  h('div', { className: 'ur-feature-note' }, `${headingLabel}${primaryWindow?.resetsAt && formatReset(primaryWindow.resetsAt) ? ` · ${resetLabel(primaryWindow.resetsAt)}` : ''}`),
                   h('div', { className: 'ur-meter ur-meter-main', 'aria-hidden': true },
                     h('span', { style: { width: `${ringPct ?? 0}%`, background: 'var(--dsw-alias-label-tertiary)' } }))),
                 windows.length === 0
@@ -465,7 +481,7 @@ window.__ModuleLoader__.load({
                               h('div', { className: 'ur-quota-ring-line' },
                                 h('span', { className: 'ur-quota-label' }, windowLabel(win.name.replace(`${group.name} · `, ''))),
                                 h('span', { className: 'ur-quota-ring-pct' }, formatPercent(win.pct))),
-                              formatReset(win.resetsAt) ? h('div', { className: 'ur-quota-ring-reset' }, `${formatReset(win.resetsAt)} 重置`) : null)))) : null;
+                              formatReset(win.resetsAt) ? h('div', { className: 'ur-quota-ring-reset' }, resetLabel(win.resetsAt)) : null)))) : null;
                       }),
                     ),
                 label === 'Codex' && rpc ? h(ResetCards, { rpc, onRefresh }) : null,
@@ -1250,16 +1266,16 @@ window.__ModuleLoader__.load({
                                 : '';
                               const name = label;
                               const winName = windowLabel(win.name);
-                              const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? `${resetText} 重置` : null].filter(Boolean).join(' · ');
+                              const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? resetLabel(win.resetsAt) : null].filter(Boolean).join(' · ');
                               return h('div', { className: 'ur-vcol', key: i, title: tip },
                                 h('span', { className: 'ur-vcol-pct' }, pctText),
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
                                   h('span', { className: 'ur-vcol-fill', style: { height: `${fillHeight}%`, background: fillOf(pct) } })),
                                 h('span', { className: 'ur-vcol-name' }, name),
                                 (displayText || usageText) ? h('span', { className: 'ur-vcol-sub' }, displayText || usageText) : null,
-                                !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, `${resetText} 重置`) : null);
+                                !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, resetLabel(win.resetsAt)) : null);
                             })),
-                          sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, `${sharedReset} 重置`) : null,
+                          sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, resetLabel((record.windows || []).find((w) => formatReset(w.resetsAt) === sharedReset)?.resetsAt)) : null,
                         ]
                       : h('div', { className: 'ur-note' }, '未提供额度明细'));
             })),
