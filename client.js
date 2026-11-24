@@ -157,7 +157,7 @@ window.__ModuleLoader__.load({
 .ur-oq-time{margin-left:auto;flex:none;font-size:10px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}
 .ur-oq-bars{display:flex;justify-content:space-evenly;gap:16px;align-items:flex-end;margin-top:16px}
 .ur-vcol{display:flex;flex-direction:column;align-items:center;min-width:0;flex:1 1 0;max-width:96px}
-.ur-vcol-pct{font-size:20px;font-weight:600;line-height:24px;letter-spacing:-.03em;color:var(--dsw-alias-label-primary);font-variant-numeric:tabular-nums;text-align:center}
+.ur-vcol[data-warn] .ur-vcol-pct{color:var(--ap-orange)}.ur-expire{color:var(--ap-orange)}.ur-vcol-pct{font-size:20px;font-weight:600;line-height:24px;letter-spacing:-.03em;color:var(--dsw-alias-label-primary);font-variant-numeric:tabular-nums;text-align:center}
 .ur-vcol-track{position:relative;width:10px;height:76px;margin-top:10px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover);box-shadow:inset 0 0 0 1px var(--dsw-alias-border-l2);display:flex;align-items:flex-end;overflow:hidden}
 .ur-vcol-fill{width:100%;border-radius:999px;filter:saturate(.7) brightness(1.02);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);transform-origin:bottom center;transition:height .5s cubic-bezier(.2,.8,.2,1),background .3s;animation:ur-grow-y .5s cubic-bezier(.2,.8,.2,1) both}
 @keyframes ur-grow-y{from{transform:scaleY(0)}}@keyframes ur-swap{from{opacity:0;filter:blur(6px)}}.ur-oq-card{animation:ur-swap .32s cubic-bezier(.2,.8,.2,1) both}@keyframes ur-pop{from{opacity:0;filter:blur(4px);transform:translateY(5px) scale(.96)}}.ur-vcol-pct{animation:ur-pop .38s cubic-bezier(.34,1.56,.64,1) both}.ur-vcol-name,.ur-vcol-sub{animation:ur-swap .3s ease-out both}.ur-oq-switch:active{transform:scale(.97)}.ur-oq-switch:focus-visible{outline:none;box-shadow:0 0 0 2px var(--dsw-alias-bg-l1,#fff),0 0 0 4px var(--dsw-alias-border-l2)}@media (prefers-reduced-motion:reduce){.ur-oq-card,.ur-vcol-pct,.ur-vcol-name,.ur-vcol-sub{animation:none}.ur-oq-switch:active{transform:none}}
@@ -1269,7 +1269,7 @@ window.__ModuleLoader__.load({
                     : record.windows?.length
                       ? [
                           h('div', { className: 'ur-oq-bars', key: 'bars' },
-                            barItems.map(({ win, label, full }, i) => {
+                            barItems.map(({ win, label, full }, i) => { if (!mergeBars) { const ti = barItems.findIndex((it) => it.win && it.win.name === 'Total credits'); if (ti >= 0 && i !== ti) return null; }
                               const pct = win.remaining ?? (win.used == null ? null : 100 - win.used);
                               const clamped = pct === null ? 0 : Math.max(0, Math.min(100, pct));
                               const fillHeight = clamped > 0 ? Math.max(4, clamped) : 0;
@@ -1287,7 +1287,7 @@ window.__ModuleLoader__.load({
                               const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? resetLabel(win.resetsAt) : null].filter(Boolean).join(' · ');
                               const rem = (w) => w.remaining ?? (w.used == null ? Infinity : 100 - w.used);
                               const totalIdx = barItems.findIndex((it) => it.win && it.win.name === 'Total credits'); const heroIdx = totalIdx >= 0 ? totalIdx : barItems.reduce((b, it, k) => rem(it.win) < rem(barItems[b].win) ? k : b, 0);
-                              return h('div', { className: 'ur-vcol', key: `${i}-${pctText}`, title: tip, 'data-low': pct !== null && pct <= 10 ? '' : undefined, 'data-hero': i === heroIdx ? '' : undefined },
+                              return h('div', { className: 'ur-vcol', key: `${i}-${pctText}`, title: tip, 'data-low': pct !== null && pct <= 10 ? '' : undefined, 'data-warn': pct !== null && pct > 10 && pct <= 30 ? '' : undefined, 'data-hero': i === heroIdx ? '' : undefined },
                                 h('span', { className: 'ur-vcol-pct' }, pctText),
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
                                   h('span', { className: 'ur-vcol-fill', style: { '--p': String(clamped / 100), '--c': pct === null ? 'var(--ap-ter)' : pct <= 10 ? 'var(--ap-red)' : pct <= 30 ? 'var(--ap-orange)' : 'var(--ap-green)' } })),
@@ -1295,6 +1295,7 @@ window.__ModuleLoader__.load({
                                 remainText ? h('span', { className: 'ur-vcol-sub' }, remainText) : null,
                                 !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, resetLabel(win.resetsAt)) : null);
                             })),
+                          (() => { const tw = (record.windows || []).find((w) => w.name === 'Total credits'); if (!tw || !tw.resetsAt) return null; const ms = new Date(tw.resetsAt).getTime() - Date.now(); const pct = tw.remaining ?? (tw.used == null ? null : 100 - tw.used); if (!(ms > 0 && ms <= 48 * 3600e3) || pct === null || pct < 30) return null; const left = Number.isFinite(tw.amount) && Number.isFinite(tw.limit) ? `${Math.max(0, +(tw.limit - tw.amount).toFixed(2))}${typeof tw.unit === 'string' ? unitLabel(tw.unit) : ''}` : formatPercent(pct); return h('div', { className: 'ur-note ur-expire', key: 'expire' }, `额度快过期了，还剩 ${left}`); })(),
                           sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, resetLabel((record.windows || []).find((w) => formatReset(w.resetsAt) === sharedReset)?.resetsAt)) : null,
                         ]
                       : h('div', { className: 'ur-note' }, '未提供额度明细'));
