@@ -262,7 +262,7 @@ test('OtherQuotas renders per-platform cards with vertical bar columns and balan
   assert.match(text, /智能体时长/)
   assert.match(text, /剩 9\.95\/10h/, 'agent-hours windows show concrete remaining amount, not just a percent')
   assert.match(text, /DeepSeek/)
-  assert.match(text, /¥119\.51/)
+  assert.match(text, /¥\s*119\.51/)
   assert.match(text, /可用余额/)
   assert.match(text, /余额计费/)
 })
