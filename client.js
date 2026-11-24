@@ -1187,7 +1187,6 @@ window.__ModuleLoader__.load({
         h('button', { type: 'button', className: 'ur-item', ref: buttonRef, 'aria-haspopup': 'dialog', 'aria-expanded': open, 'aria-label': '其他模型额度', title: '其他模型额度', onClick: () => setOpen(value => !value) },
           h('svg', { width: 14, height: 14, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true }, h('circle', { cx: 4, cy: 4, r: 2, stroke: 'currentColor', strokeWidth: 1.4 }), h('circle', { cx: 12, cy: 4, r: 2, stroke: 'currentColor', strokeWidth: 1.4 }), h('circle', { cx: 4, cy: 12, r: 2, stroke: 'currentColor', strokeWidth: 1.4 }), h('circle', { cx: 12, cy: 12, r: 2, stroke: 'currentColor', strokeWidth: 1.4 }))),
         open && position ? createPortal(h('div', { className: 'ur-panel', ref: panelRef, role: 'dialog', 'aria-label': '其他模型额度', style: panelStyle(position) },
-          h('div', { className: 'ur-head' }, h('span', { className: 'ur-head-title' }, '其他模型额度'), h('span', { className: 'ur-head-meta' }, 'Magpie · 剩余比例')),
           !Array.isArray(records) ? h('div', { className: 'ur-note' }, requestState === 'error' ? '额度读取失败' : '其他额度暂不可用') :
           records.length === 0 ? h('div', { className: 'ur-note' }, '暂未发现其他额度') :
           h('div', { className: groups.length === 1 ? 'ur-oq-grid ur-oq-single' : 'ur-oq-grid' },
