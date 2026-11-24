@@ -13,19 +13,37 @@ async function read(records) {
 const record = (readAt, windows) => ({ provider: 'codex', kind: 'subscription', readAt, windows })
 const win = (name, remaining) => ({ name, remaining, resetsAt: '2026-11-21T10:00:00Z' })
 
-test('selected windows carry source observation times; aggregate uses oldest instant', async () => {
+test('without an active account, windows come from one real account (never stitched)', async () => {
   const result = await read([
-    record('2026-11-21T09:00:00+08:00', [win('5 hours', 10), win('7 days', 50)]),
-    record('2026-11-21T02:00:00Z', [win('5 hours', 30), win('7 days', 20)]),
+    { ...record('2026-11-21T09:00:00+08:00', [win('5 hours', 10), win('7 days', 50)]), user: 'aaa@example.com' },
+    { ...record('2026-11-21T02:00:00Z', [win('5 hours', 30), win('7 days', 20)]), user: 'bbb@example.com' },
   ])
-  assert.equal(result.readAt, '2026-11-21T09:00:00+08:00')
-  assert.deepEqual(result.windows.map(w => [w.remaining, w.readAt]), [[30, '2026-11-21T02:00:00Z'], [50, '2026-11-21T09:00:00+08:00']])
+  // Account B's tightest window (20) beats A's (10), so all windows come from B.
+  assert.equal(result.readAt, '2026-11-21T02:00:00Z')
+  assert.deepEqual(result.windows.map(w => [w.remaining, w.readAt]), [[30, '2026-11-21T02:00:00Z'], [20, '2026-11-21T02:00:00Z']])
+  assert.equal(result.account, 'bbb…@example.com')
+})
+
+test('the most recently served account wins over headroom', async () => {
+  const result = await read([
+    { ...record('2026-11-21T02:00:00Z', [win('5 hours', 5)]), user: 'aaa@example.com', lastServedAt: '2026-11-21T03:00:00Z' },
+    { ...record('2026-11-21T02:00:00Z', [win('5 hours', 90)]), user: 'bbb@example.com', lastServedAt: '2026-11-21T01:00:00Z' },
+  ])
+  assert.equal(result.windows[0].remaining, 5)
+  assert.equal(result.account, 'aaa…@example.com')
 })
 
 test('unknown selected window time makes aggregate time unknown', async () => {
-  const result = await read([record(null, [win('5 hours', 10)]), record('2026-11-21T02:00:00Z', [win('7 days', 20)])])
+  const result = await read([record(null, [win('5 hours', 10), win('7 days', 20)])])
   assert.equal(result.readAt, null)
   assert.equal(result.windows[0].readAt, null)
+})
+
+test('non-email account names are masked too', async () => {
+  const { maskAccount } = await import('./quotas.js')
+  assert.equal(maskAccount('大七🚏Seven7cx'), '大七…cx')
+  assert.equal(maskAccount('abc'), 'a…')
+  assert.equal(maskAccount(''), null)
 })
 
 test('other providers retain separate quota pools and omit account identifiers', async () => {

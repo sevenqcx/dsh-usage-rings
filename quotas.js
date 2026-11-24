@@ -38,8 +38,11 @@ function selectProvider(records, provider, allowedNames, activeAccount) {
   const usable = pool.filter(record => record.kind === 'subscription' && Array.isArray(record.windows))
   const partial = usable.length < providerRecords.length || usable.some(record => !record.windows.some(w => allowedNames.has(w?.name) && (percentage(w.used) !== null || percentage(w.remaining) !== null)))
   if (usable.length === 0) return empty('unknown')
+  // Never stitch windows from different accounts into one fictional account:
+  // without an active account, show the single most plausible one.
+  const chosen = !preferred.length && usable.length > 1 ? [pickAccount(usable, allowedNames)] : usable
   const byName = new Map()
-  for (const record of usable) {
+  for (const record of chosen) {
     for (const w of record.windows) {
       if (!allowedNames.has(w?.name)) continue
       const win = {
@@ -67,8 +70,25 @@ function selectProvider(records, provider, allowedNames, activeAccount) {
   const readAt = windows.length && windows.every(w => w.readAt)
     ? windows.map(w => w.readAt).sort((a, b) => Date.parse(a) - Date.parse(b))[0]
     : null
-  const account = preferred.length ? activeAccount : null
+  const account = preferred.length
+    ? activeAccount
+    : chosen.length === 1 && typeof chosen[0].user === 'string' ? chosen[0].user : null
   return { status: available ? (partial ? 'partial' : 'available') : 'unknown', readAt, windows, account }
+}
+
+// Prefer the account Magpie served most recently; otherwise the account whose
+// tightest window has the most headroom (the one a request would succeed on).
+function pickAccount(records, allowedNames) {
+  const served = records
+    .map(record => ({ record, at: timestamp(record.lastServedAt) ? Date.parse(record.lastServedAt) : NaN }))
+    .filter(item => Number.isFinite(item.at))
+    .sort((a, b) => b.at - a.at)
+  if (served.length) return served[0].record
+  const headroom = record => {
+    const pcts = record.windows.filter(w => allowedNames.has(w?.name)).map(w => percentage(w.remaining) ?? (percentage(w.used) !== null ? 100 - w.used : null)).filter(p => p !== null)
+    return pcts.length ? Math.min(...pcts) : -1
+  }
+  return records.reduce((best, record) => (headroom(record) > headroom(best) ? record : best))
 }
 
 // Keep quota pools separate and omit account identities and arbitrary upstream text.
@@ -76,6 +96,7 @@ function otherProviders(records) {
   return records.filter(record => record && typeof record.provider === 'string' && !['codex', 'agy-cli'].includes(record.provider))
     .slice(0, 100).map(record => ({
       provider: record.provider.slice(0, 80),
+      account: maskAccount(record.user),
       kind: record.kind === 'balance' ? 'balance' : record.kind === 'subscription' ? 'subscription' : 'unknown',
       status: record.error ? 'unavailable' : 'available',
       readAt: timestamp(record.readAt),
@@ -135,9 +156,16 @@ export async function readActiveAccounts(options = {}) {
   return active
 }
 
-const maskAccount = (value) => (typeof value !== 'string'
-  ? null
-  : value.replace(/^(.{3})[^@]*(@.*)$/, '$1…$2').slice(0, 40))
+// Emails keep 3 leading chars + domain; other names keep 2 chars at each end.
+export function maskAccount(value) {
+  if (typeof value !== 'string' || !value.trim()) return null
+  const text = value.trim()
+  const email = text.match(/^(.{1,3})[^@]*(@.+)$/u)
+  if (email) return `${email[1]}…${email[2]}`.slice(0, 40)
+  const chars = [...text]
+  if (chars.length <= 4) return `${chars[0]}…`
+  return `${chars.slice(0, 2).join('')}…${chars.slice(-2).join('')}`
+}
 
 // The deadline covers response headers and the complete response body.
 export async function readMagpieQuotas(options = {}) {
@@ -171,7 +199,7 @@ export async function readMagpieQuotas(options = {}) {
       others: otherProviders(payload.data),
     }
   } catch {
-    return { codex: empty(status), antigravity: empty(status) }
+    return { codex: empty(status), antigravity: empty(status), others: [] }
   } finally {
     clearTimeout(timer)
     controller.abort()

@@ -153,7 +153,7 @@ window.__ModuleLoader__.load({
 .ur-oq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ur-oq-grid.ur-oq-single{grid-template-columns:minmax(0,1fr)}
 .ur-oq-card{display:flex;flex-direction:column;min-width:0;padding:12px 14px;border:1px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-interactive-bg-hover)}
 .ur-oq-head{display:flex;align-items:center;gap:6px;min-width:0;padding-bottom:8px;border-bottom:1px solid var(--dsw-alias-border-l2)}
-.ur-oq-title{font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ur-oq-title{font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ur-oq-account{font-size:11px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .ur-oq-time{margin-left:auto;flex:none;font-size:10px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}
 .ur-oq-bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:8px;align-items:start;margin-top:10px}
 .ur-vcol{display:flex;flex-direction:column;align-items:center;min-width:0}
@@ -269,6 +269,16 @@ window.__ModuleLoader__.load({
       deepseek: 'DeepSeek',
     }[name] || name);
 
+    // Display-only mask; mirrors quotas.js maskAccount (the raw id is still needed for RPC).
+    const maskName = (value) => {
+      if (typeof value !== 'string' || !value.trim()) return '';
+      const text = value.trim();
+      const email = text.match(/^(.{1,3})[^@]*(@.+)$/u);
+      if (email) return `${email[1]}…${email[2]}`.slice(0, 40);
+      const chars = [...text];
+      return chars.length <= 4 ? `${chars[0]}…` : `${chars.slice(0, 2).join('')}…${chars.slice(-2).join('')}`;
+    };
+
     const round = (pct) => Math.max(0, Math.min(100, Math.round(pct)));
     const formatPercent = (pct) => pct > 0 && pct < 0.5 ? '<1%' : `${round(pct)}%`;
 
@@ -327,7 +337,7 @@ window.__ModuleLoader__.load({
           h('span', { className: 'ur-reset-meta' }, accounts ? `${total} 张${earliest ? ` · 最早 ${formatReset(earliest)} 到期` : total ? ' · 到期时间未知' : ''}` : '读取中'),
           chevron),
         expanded && accounts ? accounts.map((account) => h('div', { className: 'ur-reset-account', key: account.user },
-          h('div', { className: 'ur-reset-account-name' }, account.user),
+          h('div', { className: 'ur-reset-account-name' }, maskName(account.user)),
           account.each?.length ? account.each.map((card) => h('div', { className: 'ur-reset-card', key: card.id },
             h('span', { className: 'ur-reset-time' }, card.until ? `${formatReset(card.until)} 到期` : '到期时间未知'),
             h('button', { type: 'button', className: 'ur-reset-action', onClick: () => setSelected({ user: account.user, credit: card.id }) }, '使用'))) : h('div', { className: 'ur-note' }, `${account.count} 张 · ${account.until ? `${formatReset(account.until)} 到期` : '到期时间或卡片明细未知'}`))) : null,
@@ -1177,6 +1187,7 @@ window.__ModuleLoader__.load({
               return h('div', { className: 'ur-oq-card', key: `${record.provider}-${index}` },
                 h('div', { className: 'ur-oq-head' },
                   h('span', { className: 'ur-oq-title' }, providerLabel(record.provider)),
+                  typeof record.account === 'string' ? h('span', { className: 'ur-oq-account', title: record.account }, record.account) : null,
                   h('span', { className: 'ur-oq-time', title: readTime ? `读取于 ${readTime}` : undefined }, readTime || '时间未知'),
                   record.provider === 'workbuddy'
                     ? h('button', { type: 'button', className: 'ur-checkin', disabled: checkin === 'running', onClick: runCheckin, title: '为所有 WorkBuddy 账号签到', 'aria-label': '为所有 WorkBuddy 账号签到' }, '✓')
