@@ -1295,7 +1295,6 @@ window.__ModuleLoader__.load({
                                 remainText ? h('span', { className: 'ur-vcol-sub' }, remainText) : null,
                                 !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, (win.expires ? String(resetLabel(win.resetsAt)).replace('重置', '到期') : resetLabel(win.resetsAt))) : null);
                             })),
-                          ...(record.notes || []).map((t, k) => h('div', { className: 'ur-note ur-oq-hint', key: `note-${k}` }, t)),
                           (() => { const tw = (record.windows || []).find((w) => /^(total\b|总)/i.test(w.name || '')); if (!tw || !tw.resetsAt) return null; const ms = new Date(tw.resetsAt).getTime() - Date.now(); const pct = tw.remaining ?? (tw.used == null ? null : 100 - tw.used); if (!(ms > 0 && ms <= 48 * 3600e3) || pct === null || pct < 30) return null; const left = Number.isFinite(tw.amount) && Number.isFinite(tw.limit) ? `${Math.max(0, +(tw.limit - tw.amount).toFixed(2))}${typeof tw.unit === 'string' ? unitLabel(tw.unit) : ''}` : formatPercent(pct); return h('div', { className: 'ur-note ur-expire', key: 'expire' }, `额度快过期了，还剩 ${left}`); })(),
                           sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, resetLabel((record.windows || []).find((w) => formatReset(w.resetsAt) === sharedReset)?.resetsAt)) : null,
                         ]
