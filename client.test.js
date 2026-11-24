@@ -259,7 +259,7 @@ test('OtherQuotas renders per-platform cards with vertical bar columns and balan
   assert.match(text, /WorkBuddy/)
   assert.match(text, /42%/)
   assert.match(text, /291\.46\/500/)
-  assert.match(text, /Agent hours/)
+  assert.match(text, /智能体时长/)
   assert.match(text, /0\.05\/10h/, 'agent-hours windows show concrete usage, not just a percent')
   assert.match(text, /DeepSeek/)
   assert.match(text, /¥119\.51/)

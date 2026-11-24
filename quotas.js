@@ -96,7 +96,8 @@ function otherProviders(records) {
   return records.filter(record => record && typeof record.provider === 'string' && !['codex', 'agy-cli'].includes(record.provider))
     .slice(0, 100).map(record => ({
       provider: record.provider.slice(0, 80),
-      account: maskAccount(record.user),
+      // Shown in full on request; the panel is local to this machine.
+      account: typeof record.user === 'string' && record.user.trim() ? record.user.trim().slice(0, 80) : null,
       // User-set label in Magpie; shown as-is because the user chose it.
       // No alias but the account is itself an email (e.g. aws-quick OAuth): show it like an alias,
       // so accounts of one provider read the same way.

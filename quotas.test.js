@@ -46,7 +46,7 @@ test('non-email account names are masked too', async () => {
   assert.equal(maskAccount(''), null)
 })
 
-test('other providers retain separate quota pools and omit account identifiers', async () => {
+test('other providers retain separate quota pools, show the account in full, drop window-level ids', async () => {
   const oldFetch = globalThis.fetch
   globalThis.fetch = async () => new Response(JSON.stringify({ object: 'list', data: [
     { provider: 'deepseek', kind: 'balance', balance: '12.5 CNY', user: 'secret@example.com' },
@@ -58,7 +58,8 @@ test('other providers retain separate quota pools and omit account identifiers',
     assert.equal(others.length, 2)
     assert.equal(others[0].balance, '12.5 CNY')
     assert.equal(others[1].windows[0].remaining, 37)
-    assert.doesNotMatch(JSON.stringify(others), /secret@example|private/)
+    assert.equal(others[0].account, 'secret@example.com')
+    assert.doesNotMatch(JSON.stringify(others), /private/)
   } finally { globalThis.fetch = oldFetch }
 })
 
