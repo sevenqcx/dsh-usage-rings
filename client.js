@@ -157,7 +157,7 @@ window.__ModuleLoader__.load({
 .ur-oq-time{margin-left:auto;flex:none;font-size:10px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}
 .ur-oq-bars{display:flex;justify-content:space-evenly;gap:16px;align-items:flex-end;margin-top:16px}
 .ur-vcol{display:flex;flex-direction:column;align-items:center;min-width:0;flex:1 1 0;max-width:96px}
-.ur-vcol[data-warn] .ur-vcol-pct{color:var(--ap-orange)}.ur-expire{color:var(--ap-orange)}.ur-vcol-pct{font-size:20px;font-weight:600;line-height:24px;letter-spacing:-.03em;color:var(--dsw-alias-label-primary);font-variant-numeric:tabular-nums;text-align:center}
+.ur-vcol[data-warn] .ur-oq-more{all:unset;cursor:pointer;font-size:11px;color:var(--dsw-alias-label-secondary);padding:2px 0}.ur-oq-more:hover{color:var(--dsw-alias-label-primary)}.ur-vcol-pct{color:var(--ap-orange)}.ur-expire{color:var(--ap-orange)}.ur-vcol-pct{font-size:20px;font-weight:600;line-height:24px;letter-spacing:-.03em;color:var(--dsw-alias-label-primary);font-variant-numeric:tabular-nums;text-align:center}
 .ur-vcol-track{position:relative;width:10px;height:76px;margin-top:10px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover);box-shadow:inset 0 0 0 1px var(--dsw-alias-border-l2);display:flex;align-items:flex-end;overflow:hidden}
 .ur-vcol-fill{width:100%;border-radius:999px;filter:saturate(.7) brightness(1.02);box-shadow:inset 0 1px 0 rgba(255,255,255,.35);transform-origin:bottom center;transition:height .5s cubic-bezier(.2,.8,.2,1),background .3s;animation:ur-grow-y .5s cubic-bezier(.2,.8,.2,1) both}
 @keyframes ur-grow-y{from{transform:scaleY(0)}}@keyframes ur-swap{from{opacity:0;filter:blur(6px)}}.ur-oq-card{animation:ur-swap .32s cubic-bezier(.2,.8,.2,1) both}@keyframes ur-pop{from{opacity:0;filter:blur(4px);transform:translateY(5px) scale(.96)}}.ur-vcol-pct{animation:ur-pop .38s cubic-bezier(.34,1.56,.64,1) both}.ur-vcol-name,.ur-vcol-sub{animation:ur-swap .3s ease-out both}.ur-oq-switch:active{transform:scale(.97)}.ur-oq-switch:focus-visible{outline:none;box-shadow:0 0 0 2px var(--dsw-alias-bg-l1,#fff),0 0 0 4px var(--dsw-alias-border-l2)}@media (prefers-reduced-motion:reduce){.ur-oq-card,.ur-vcol-pct,.ur-vcol-name,.ur-vcol-sub{animation:none}.ur-oq-switch:active{transform:none}}
@@ -1194,7 +1194,7 @@ window.__ModuleLoader__.load({
       const panelRef = React.useRef(null);
       const buttonRef = React.useRef(null);
       // One card per provider; multiple accounts of a provider are switched in place.
-      const [picked, setPicked] = React.useState({});
+      const [picked, setPicked] = React.useState({}); const [openCards, setOpenCards] = React.useState({});
       const groups = [];
       if (Array.isArray(records)) {
         const byProvider = new Map();
@@ -1269,7 +1269,7 @@ window.__ModuleLoader__.load({
                     : record.windows?.length
                       ? [
                           h('div', { className: 'ur-oq-bars', key: 'bars' },
-                            barItems.map(({ win, label, full }, i) => { if (!mergeBars) { const ti = barItems.findIndex((it) => it.win && it.win.name === 'Total credits'); if (ti >= 0 && i !== ti) return null; }
+                            barItems.map(({ win, label, full }, i) => { if (!mergeBars && !openCards[`${record.provider}:${record.account || ''}`]) { const ti = barItems.findIndex((it) => it.win && it.win.name === 'Total credits'); if (ti >= 0 && i !== ti) return null; }
                               const pct = win.remaining ?? (win.used == null ? null : 100 - win.used);
                               const clamped = pct === null ? 0 : Math.max(0, Math.min(100, pct));
                               const fillHeight = clamped > 0 ? Math.max(4, clamped) : 0;
@@ -1295,6 +1295,7 @@ window.__ModuleLoader__.load({
                                 remainText ? h('span', { className: 'ur-vcol-sub' }, remainText) : null,
                                 !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, resetLabel(win.resetsAt)) : null);
                             })),
+                          (() => { const ck = `${record.provider}:${record.account || ''}`; if (mergeBars || !(record.windows || []).some((w) => w.name === 'Total credits') || (record.windows || []).length < 2) return null; const open = !!openCards[ck]; return h('button', { type: 'button', className: 'ur-oq-more', key: 'more', 'aria-expanded': open, onClick: () => setOpenCards((p) => ({ ...p, [ck]: !p[ck] })) }, open ? '收起明细 ▴' : '展开明细 ▾'); })(),
                           (() => { const tw = (record.windows || []).find((w) => w.name === 'Total credits'); if (!tw || !tw.resetsAt) return null; const ms = new Date(tw.resetsAt).getTime() - Date.now(); const pct = tw.remaining ?? (tw.used == null ? null : 100 - tw.used); if (!(ms > 0 && ms <= 48 * 3600e3) || pct === null || pct < 30) return null; const left = Number.isFinite(tw.amount) && Number.isFinite(tw.limit) ? `${Math.max(0, +(tw.limit - tw.amount).toFixed(2))}${typeof tw.unit === 'string' ? unitLabel(tw.unit) : ''}` : formatPercent(pct); return h('div', { className: 'ur-note ur-expire', key: 'expire' }, `额度快过期了，还剩 ${left}`); })(),
                           sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, resetLabel((record.windows || []).find((w) => formatReset(w.resetsAt) === sharedReset)?.resetsAt)) : null,
                         ]
