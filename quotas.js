@@ -98,7 +98,10 @@ function otherProviders(records) {
       provider: record.provider.slice(0, 80),
       account: maskAccount(record.user),
       // User-set label in Magpie; shown as-is because the user chose it.
-      alias: typeof record.alias === 'string' && record.alias.trim() ? record.alias.trim().slice(0, 60) : null,
+      // No alias but the account is itself an email (e.g. aws-quick OAuth): show it like an alias,
+      // so accounts of one provider read the same way.
+      alias: typeof record.alias === 'string' && record.alias.trim() ? record.alias.trim().slice(0, 60)
+        : typeof record.user === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(record.user.trim()) && record.provider === 'aws-quick' ? record.user.trim().slice(0, 60) : null,
       kind: record.kind === 'balance' ? 'balance' : record.kind === 'subscription' ? 'subscription' : 'unknown',
       status: record.error ? 'unavailable' : 'available',
       readAt: timestamp(record.readAt),
