@@ -221,6 +221,15 @@ test('OtherQuotas renders per-platform cards with vertical bar columns and balan
         ],
       },
       {
+        provider: 'aws-quick',
+        kind: 'subscription',
+        status: 'available',
+        readAt: '2026-11-24T12:02:08+08:00',
+        windows: [
+          { name: 'Agent hours', used: 0.5, remaining: 99.5, resetsAt: '2026-11-30T16:00:00Z', amount: 0.05, limit: 10, unit: 'h' },
+        ],
+      },
+      {
         provider: 'deepseek',
         kind: 'balance',
         status: 'available',
@@ -237,18 +246,21 @@ test('OtherQuotas renders per-platform cards with vertical bar columns and balan
   const panel = panelOf(tree)
   const nodes = collect(panel)
   const cards = nodes.filter(node => node.props?.className === 'ur-oq-card')
-  assert.equal(cards.length, 2)
+  assert.equal(cards.length, 3)
   const bars = nodes.filter(node => node.props?.className === 'ur-vcol-fill')
-  assert.equal(bars.length, 3)
+  assert.equal(bars.length, 4)
   assert.equal(bars[0].props.style.height, '42%')
   assert.equal(bars[1].props.style.height, '60%')
   assert.equal(bars[2].props.style.height, '51%')
-  assert.equal(nodes.filter(node => node.props?.className === 'ur-oq-reset').length, 2)
+  assert.equal(bars[3].props.style.height, '99.5%')
+  assert.equal(nodes.filter(node => node.props?.className === 'ur-oq-reset').length, 3)
   assert.equal(nodes.filter(node => node.props?.className === 'ur-vcol-reset').length, 0)
   const text = textOf(panel)
   assert.match(text, /WorkBuddy/)
   assert.match(text, /42%/)
   assert.match(text, /291\.46\/500/)
+  assert.match(text, /Agent hours/)
+  assert.match(text, /0\.05\/10h/, 'agent-hours windows show concrete usage, not just a percent')
   assert.match(text, /DeepSeek/)
   assert.match(text, /¥119\.51/)
   assert.match(text, /可用余额/)

@@ -84,6 +84,10 @@ function otherProviders(records) {
         name: typeof w.name === 'string' ? w.name.slice(0, 100) : '额度',
         used: percentage(w.used), remaining: percentage(w.remaining), resetsAt: timestamp(w.resetsAt),
         display: typeof w.display === 'string' ? w.display.slice(0, 100) : null,
+        // Non-token platforms (e.g. agent-hours pools) report concrete usage.
+        amount: Number.isFinite(w.amount) && w.amount >= 0 ? w.amount : null,
+        limit: Number.isFinite(w.limit) && w.limit >= 0 ? w.limit : null,
+        unit: typeof w.unit === 'string' && w.unit.length >= 1 && w.unit.length <= 8 ? w.unit : null,
       })) : [],
     }))
 }

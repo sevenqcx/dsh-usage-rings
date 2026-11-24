@@ -1203,14 +1203,18 @@ window.__ModuleLoader__.load({
                               const pctText = pct === null ? '—' : formatPercent(pct);
                               const resetText = formatReset(win.resetsAt);
                               const displayText = typeof win.display === 'string' ? win.display.replace(/\s*\/\s*/g, '/') : '';
+                              // Non-token platforms report concrete usage, e.g. 0.05/10h agent hours.
+                              const usageText = Number.isFinite(win.amount) && Number.isFinite(win.limit) && win.limit > 0
+                                ? `${win.amount}/${win.limit}${typeof win.unit === 'string' ? win.unit : ''}`
+                                : '';
                               const name = windowLabel(win.name);
-                              const tip = [name, pct !== null ? `剩余 ${pctText}` : null, displayText, resetText ? `${resetText} 重置` : null].filter(Boolean).join(' · ');
+                              const tip = [name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? `${resetText} 重置` : null].filter(Boolean).join(' · ');
                               return h('div', { className: 'ur-vcol', key: i, title: tip },
                                 h('span', { className: 'ur-vcol-pct' }, pctText),
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
                                   h('span', { className: 'ur-vcol-fill', style: { height: `${fillHeight}%`, background: fillOf(pct) } })),
                                 h('span', { className: 'ur-vcol-name' }, name),
-                                displayText ? h('span', { className: 'ur-vcol-sub' }, displayText) : null,
+                                (displayText || usageText) ? h('span', { className: 'ur-vcol-sub' }, displayText || usageText) : null,
                                 !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, `${resetText} 重置`) : null);
                             })),
                           sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, `${sharedReset} 重置`) : null,

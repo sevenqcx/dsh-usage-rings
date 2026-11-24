@@ -44,6 +44,27 @@ test('other providers retain separate quota pools and omit account identifiers',
   } finally { globalThis.fetch = oldFetch }
 })
 
+test('non-token windows keep their concrete usage amount, limit and unit', async () => {
+  const oldFetch = globalThis.fetch
+  globalThis.fetch = async () => new Response(JSON.stringify({ object: 'list', data: [
+    { provider: 'aws-quick', kind: 'subscription', windows: [
+      { name: 'Agent hours', used: 0.5, remaining: 99.5, resetsAt: '2026-11-30T16:00:00Z', amount: 0.05, limit: 10, unit: 'h' },
+      { name: 'Bad window', remaining: 50, amount: 'x', limit: -1, unit: 'very-long-unit-name' },
+    ] },
+  ] }))
+  try {
+    const { others } = await readMagpieQuotas()
+    assert.equal(others.length, 1)
+    const [hours, bad] = others[0].windows
+    assert.equal(hours.amount, 0.05)
+    assert.equal(hours.limit, 10)
+    assert.equal(hours.unit, 'h')
+    assert.equal(bad.amount, null)
+    assert.equal(bad.limit, null)
+    assert.equal(bad.unit, null)
+  } finally { globalThis.fetch = oldFetch }
+})
+
 test('a failed or empty account is reported as partial instead of silently omitted', async () => {
   for (const missing of [{ provider: 'codex', error: 'unavailable' }, record(null, [])]) {
     const result = await read([record('2026-11-21T02:00:00Z', [win('5 hours', 10)]), missing])
