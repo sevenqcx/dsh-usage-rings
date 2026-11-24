@@ -1277,6 +1277,8 @@ window.__ModuleLoader__.load({
                                 ? `${win.amount}/${win.limit}${typeof win.unit === 'string' ? win.unit : ''}`
                                 : '';
                               const name = label;
+                              // Unify sub text to remaining: derive total from 'x/total' and show remaining = total*pct.
+                              const remainText = (() => { const src = usageText || displayText; const m = /([\d.]+)\/([\d.]+)\s*([^\d\s]*)$/.exec(src); if (!m || pct === null) return src; const tot = Number(m[2]); const r = Math.max(0, tot - Number(m[1])); const f = (n) => String(Math.round(n * 100) / 100); return `剩 ${f(r)}/${f(tot)}${m[3] || ''}`; })();
                               const winName = windowLabel(win.name);
                               const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? resetLabel(win.resetsAt) : null].filter(Boolean).join(' · ');
                               const rem = (w) => w.remaining ?? (w.used == null ? Infinity : 100 - w.used);
@@ -1286,7 +1288,7 @@ window.__ModuleLoader__.load({
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
                                   h('span', { className: 'ur-vcol-fill', style: { '--p': String(clamped / 100), '--c': pct === null ? 'var(--ap-ter)' : pct <= 10 ? 'var(--ap-red)' : pct <= 30 ? 'var(--ap-orange)' : 'var(--ap-green)' } })),
                                 h('span', { className: 'ur-vcol-name' }, name),
-                                (displayText || usageText) ? h('span', { className: 'ur-vcol-sub' }, displayText || usageText) : null,
+                                remainText ? h('span', { className: 'ur-vcol-sub' }, remainText) : null,
                                 !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, resetLabel(win.resetsAt)) : null);
                             })),
                           sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, resetLabel((record.windows || []).find((w) => formatReset(w.resetsAt) === sharedReset)?.resetsAt)) : null,
