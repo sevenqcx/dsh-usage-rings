@@ -209,7 +209,6 @@ window.__ModuleLoader__.load({
 /* emphasis: remaining % is the hero number; labels/meta recede */.ur-oq-title{font-size:12px;font-weight:500;color:var(--dsw-alias-label-secondary)}.ur-oq-time{font-size:10px;opacity:.7}.ur-oq-head>.ur-oq-account,.ur-oq-switch{font-size:11px}.ur-vcol,.ur-vcol:hover{grid-template-areas:'name pct' 'sub pct' 'bar bar';align-items:end;row-gap:4px}.ur-vcol-pct{font-size:24px;line-height:28px;font-weight:600;letter-spacing:-.03em;color:var(--dsw-alias-label-primary)}.ur-vcol-name{font-size:12px;line-height:16px;color:var(--dsw-alias-label-secondary)}.ur-vcol-sub{font-size:10px;line-height:12px;color:var(--dsw-alias-label-tertiary)}.ur-vcol:not(:has(.ur-vcol-sub)) .ur-vcol-name{grid-row:1/span 2;align-self:end;padding-bottom:4px}.ur-vcol-track{margin-top:2px}.ur-vcol[data-low] .ur-vcol-pct{color:var(--ap-red)}.ur-oq-reset{font-size:10px}.ur-oq-bal-v{font-size:24px;line-height:28px;font-weight:600}.ur-oq-bal-k{font-size:11px;color:var(--dsw-alias-label-tertiary)}
 
 /* single focus: only the tightest quota per card is big; everything else is quiet body text */.ur-vcol-pct{font-size:13px;line-height:16px;font-weight:500;letter-spacing:0;color:var(--dsw-alias-label-secondary)}.ur-vcol-fill{background:var(--dsw-alias-label-tertiary)}.ur-vcol[data-hero] .ur-vcol-pct{font-size:28px;line-height:32px;font-weight:600;letter-spacing:-.03em;color:var(--dsw-alias-label-primary)}.ur-vcol[data-hero] .ur-vcol-name{color:var(--dsw-alias-label-primary)}.ur-vcol[data-hero] .ur-vcol-fill{background:var(--dsw-alias-label-primary)}.ur-vcol[data-low] .ur-vcol-pct{color:var(--ap-red)}.ur-vcol[data-low] .ur-vcol-fill{background:var(--ap-red)}.ur-oq-bars{gap:10px}.ur-oq-bal-v{font-size:28px;line-height:32px;font-weight:600}
-/* fixed hero top-right, tone by severity, quiet body rows, full-width bars */.ur-oq-top{display:flex;align-items:baseline;margin:0 2px 10px;font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary)}.ur-oq-top-t{margin-left:auto;font-size:11px;font-weight:400;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}.ur-oq-head{flex-wrap:nowrap;align-items:flex-start}.ur-oq-hero{order:3;margin-left:auto;font-size:26px;line-height:28px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums;white-space:nowrap}.ur-oq-hero small{font-size:.6em;font-weight:500;margin-right:2px}.ur-oq-hero[data-tone=calm]{font-weight:500;color:var(--dsw-alias-label-tertiary)}.ur-oq-hero[data-tone=warn]{color:var(--dsw-alias-label-primary)}.ur-oq-hero[data-tone=low]{color:var(--ap-red)}.ur-vcol[data-hero] .ur-vcol-pct{font-size:13px;line-height:16px;font-weight:500;letter-spacing:0;color:var(--dsw-alias-label-secondary)}.ur-vcol[data-hero] .ur-vcol-name{color:var(--dsw-alias-label-secondary)}.ur-vcol[data-low] .ur-vcol-pct{color:var(--ap-red)}.ur-oq-bars{flex-direction:column;align-items:stretch}.ur-vcol{max-width:none;width:100%}.ur-vcol-track{width:100%}.ur-oq-grid{align-items:start}.ur-oq-balance{padding:6px 0 0}
 `;
 
     const percentOf = (win) => {
@@ -1218,8 +1217,7 @@ window.__ModuleLoader__.load({
         open && position ? createPortal(h('div', { className: 'ur-panel', ref: panelRef, role: 'dialog', 'aria-label': '其他模型额度', style: panelStyle(position) },
           !Array.isArray(records) ? h('div', { className: 'ur-note' }, requestState === 'error' ? '额度读取失败' : '其他额度暂不可用') :
           records.length === 0 ? h('div', { className: 'ur-note' }, '暂未发现其他额度') :
-          [h('div', { className: 'ur-oq-top', key: 'top' }, h('span', null, '其他额度'), (() => { const ts = records.map((r) => r.readAt).filter(Boolean).sort().pop(); const t = ts ? formatReset(ts) : ''; return t ? h('span', { className: 'ur-oq-top-t' }, `${t} 更新`) : null; })()),
-          h('div', { key: 'grid', className: groups.length === 1 ? 'ur-oq-grid ur-oq-single' : 'ur-oq-grid' },
+          h('div', { className: groups.length === 1 ? 'ur-oq-grid ur-oq-single' : 'ur-oq-grid' },
             groups.map((group, index) => {
               const count = group.items.length;
               const pos = Math.min(picked[group.provider] ?? 0, count - 1);
@@ -1232,23 +1230,15 @@ window.__ModuleLoader__.load({
               const readTime = record.readAt ? formatReset(record.readAt) : '';
               const resetTimes = [...new Set(barItems.map(({ win }) => formatReset(win.resetsAt)).filter(Boolean))];
               const sharedReset = resetTimes.length === 1 ? resetTimes[0] : '';
-              const remOf = (w) => w.remaining ?? (w.used == null ? null : 100 - w.used);
-              const heroVals = barItems.map(({ win }) => remOf(win)).filter((v) => v !== null);
-              const heroPct = heroVals.length ? Math.min(...heroVals) : null;
-              const heroTone = heroPct === null ? 'calm' : heroPct <= 10 ? 'low' : heroPct <= 30 ? 'warn' : 'calm';
-              const balStr = String(record.balance ?? '未知'); const balM = /^([^\d\-]*)\s*(.*)$/.exec(balStr);
-              const heroNode = record.status === 'unavailable' ? null : record.kind === 'balance'
-                ? h('span', { className: 'ur-oq-hero', 'data-tone': 'calm' }, balM && balM[1].trim() ? h('small', null, balM[1].trim()) : null, balM ? balM[2] : balStr)
-                : heroPct === null ? null : h('span', { className: 'ur-oq-hero', 'data-tone': heroTone }, formatPercent(heroPct));
               return h('div', { className: 'ur-oq-card', key: `${record.provider}-${index}-${pos}`, style: { animationDelay: `${index * 50}ms` } },
                 h('div', { className: 'ur-oq-head' },
-                  h('span', { className: 'ur-oq-title', title: [record.alias, record.account, readTime ? `读取于 ${readTime}` : ''].filter(Boolean).join(' · ') || undefined }, providerLabel(record.provider)),
+                  h('span', { className: 'ur-oq-title' }, providerLabel(record.provider)),
                   (() => {
                     // Alias (user-chosen in Magpie) first, masked account as fallback; same slot for 1 or N accounts.
                     const label = record.alias || record.account || (count > 1 ? `账号 ${pos + 1}` : '');
                     const tip = [record.alias, record.account].filter(Boolean).join(' · ');
                     if (mergeBars) return null;
-                    if (count === 1) return record.alias ? h('span', { className: 'ur-oq-account', title: tip || undefined }, record.alias) : null;
+                    if (count === 1) return label ? h('span', { className: 'ur-oq-account', title: tip || undefined }, label) : null;
                     return h('button', {
                       type: 'button', className: 'ur-oq-switch',
                       title: `${tip || label}（${pos + 1}/${count}，点击切换）`,
@@ -1256,7 +1246,7 @@ window.__ModuleLoader__.load({
                       onClick: () => setPicked((prev) => ({ ...prev, [group.provider]: (pos + 1) % count })),
                     }, h('span', { className: 'ur-oq-switch-name' }, label), h('span', { className: 'ur-oq-switch-idx' }, `⇄ ${pos + 1}/${count}`));
                   })(),
-                  heroNode,
+                  h('span', { className: 'ur-oq-time', title: readTime ? `读取于 ${readTime}` : undefined }, readTime || '时间未知'),
                   record.provider === 'workbuddy'
                     ? h('button', { type: 'button', className: 'ur-checkin', disabled: checkin === 'running', onClick: runCheckin, title: '为所有 WorkBuddy 账号签到', 'aria-label': '为所有 WorkBuddy 账号签到' }, '✓')
                     : null),
@@ -1268,7 +1258,9 @@ window.__ModuleLoader__.load({
                   : record.kind === 'balance'
                     ? [
                         h('div', { className: 'ur-oq-balance', key: 'balance' },
-                                                    h('span', { className: 'ur-oq-bal-k' }, '可用余额')),
+                          h('b', { className: 'ur-oq-bal-v' }, record.balance ?? '未知'),
+                          h('span', { className: 'ur-oq-bal-k' }, '可用余额')),
+                        h('div', { className: 'ur-oq-reset', key: 'kind' }, '余额计费'),
                       ]
                     : record.windows?.length
                       ? [
@@ -1302,7 +1294,7 @@ window.__ModuleLoader__.load({
                           sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, resetLabel((record.windows || []).find((w) => formatReset(w.resetsAt) === sharedReset)?.resetsAt)) : null,
                         ]
                       : h('div', { className: 'ur-note' }, '未提供额度明细'));
-            }))],
+            })),
           requestState === 'error' ? h('div', { className: 'ur-foot' }, '刷新失败，显示上次读取。') : null), document.body) : null);
     }
 

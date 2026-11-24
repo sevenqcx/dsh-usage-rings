@@ -253,7 +253,7 @@ test('OtherQuotas renders per-platform cards with vertical bar columns and balan
   assert.equal(bars[1].props.style['--p'], '0.6')
   assert.equal(bars[2].props.style['--p'], '0.51')
   assert.equal(bars[3].props.style['--p'], '0.995')
-  assert.equal(nodes.filter(node => node.props?.className === 'ur-oq-reset').length, 2)
+  assert.equal(nodes.filter(node => node.props?.className === 'ur-oq-reset').length, 3)
   assert.equal(nodes.filter(node => node.props?.className === 'ur-vcol-reset').length, 0)
   const text = textOf(panel)
   assert.match(text, /WorkBuddy/)
