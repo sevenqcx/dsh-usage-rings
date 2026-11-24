@@ -97,6 +97,8 @@ function otherProviders(records) {
     .slice(0, 100).map(record => ({
       provider: record.provider.slice(0, 80),
       account: maskAccount(record.user),
+      // User-set label in Magpie; shown as-is because the user chose it.
+      alias: typeof record.alias === 'string' && record.alias.trim() ? record.alias.trim().slice(0, 60) : null,
       kind: record.kind === 'balance' ? 'balance' : record.kind === 'subscription' ? 'subscription' : 'unknown',
       status: record.error ? 'unavailable' : 'available',
       readAt: timestamp(record.readAt),
