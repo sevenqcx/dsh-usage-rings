@@ -160,7 +160,7 @@ window.__ModuleLoader__.load({
 .ur-vcol-pct{font-size:15px;font-weight:600;line-height:18px;letter-spacing:-.02em;color:var(--dsw-alias-label-primary);font-variant-numeric:tabular-nums;text-align:center}
 .ur-vcol-track{width:30px;height:68px;margin-top:6px;border-radius:8px;background:var(--dsw-alias-border-l2);display:flex;align-items:flex-end;overflow:hidden}
 .ur-vcol-fill{width:100%;border-radius:6px;transform-origin:bottom center;transition:height .45s cubic-bezier(.2,.8,.2,1),background .3s;animation:ur-grow-y .45s cubic-bezier(.2,.8,.2,1) both}
-@keyframes ur-grow-y{from{transform:scaleY(0)}}
+@keyframes ur-grow-y{from{transform:scaleY(0)}}@keyframes ur-swap{from{opacity:0;filter:blur(6px)}}.ur-oq-card{animation:ur-swap .32s cubic-bezier(.2,.8,.2,1) both}@keyframes ur-pop{from{opacity:0;filter:blur(4px);transform:translateY(5px) scale(.96)}}.ur-vcol-pct{animation:ur-pop .38s cubic-bezier(.34,1.56,.64,1) both}.ur-vcol-name,.ur-vcol-sub{animation:ur-swap .3s ease-out both}.ur-oq-switch:active{transform:scale(.97)}.ur-oq-switch:focus-visible{outline:none;box-shadow:0 0 0 2px var(--dsw-alias-bg-l1,#fff),0 0 0 4px var(--dsw-alias-border-l2)}@media (prefers-reduced-motion:reduce){.ur-oq-card,.ur-vcol-pct,.ur-vcol-name,.ur-vcol-sub{animation:none}.ur-oq-switch:active{transform:none}}
 .ur-vcol-name{margin-top:8px;font-size:12px;font-weight:500;line-height:1.25;color:var(--dsw-alias-label-primary);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .ur-vcol-sub{margin-top:2px;font-size:10px;line-height:1.25;color:var(--dsw-alias-label-tertiary);text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .ur-vcol-reset{margin-top:2px;font-size:10px;line-height:1.25;color:var(--dsw-alias-label-tertiary);text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -1218,7 +1218,7 @@ window.__ModuleLoader__.load({
               const readTime = record.readAt ? formatReset(record.readAt) : '';
               const resetTimes = [...new Set(barItems.map(({ win }) => formatReset(win.resetsAt)).filter(Boolean))];
               const sharedReset = resetTimes.length === 1 ? resetTimes[0] : '';
-              return h('div', { className: 'ur-oq-card', key: `${record.provider}-${index}` },
+              return h('div', { className: 'ur-oq-card', key: `${record.provider}-${index}-${pos}`, style: { animationDelay: `${index * 50}ms` } },
                 h('div', { className: 'ur-oq-head' },
                   h('span', { className: 'ur-oq-title' }, providerLabel(record.provider)),
                   (() => {
@@ -1267,7 +1267,7 @@ window.__ModuleLoader__.load({
                               const name = label;
                               const winName = windowLabel(win.name);
                               const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? resetLabel(win.resetsAt) : null].filter(Boolean).join(' · ');
-                              return h('div', { className: 'ur-vcol', key: i, title: tip },
+                              return h('div', { className: 'ur-vcol', key: `${i}-${pctText}`, title: tip },
                                 h('span', { className: 'ur-vcol-pct' }, pctText),
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
                                   h('span', { className: 'ur-vcol-fill', style: { height: `${fillHeight}%`, background: fillOf(pct) } })),
