@@ -496,7 +496,7 @@ window.__ModuleLoader__.load({
                               h('div', { className: 'ur-quota-ring-line' },
                                 h('span', { className: 'ur-quota-label' }, windowLabel(win.name.replace(`${group.name} · `, ''))),
                                 h('span', { className: 'ur-quota-ring-pct' }, formatPercent(win.pct))),
-                              formatReset(win.resetsAt) ? h('div', { className: 'ur-quota-ring-reset' }, resetLabel(win.resetsAt)) : null)))) : null;
+                              formatReset(win.resetsAt) ? h('div', { className: 'ur-quota-ring-reset' }, (win.expires ? String(resetLabel(win.resetsAt)).replace('重置', '到期') : resetLabel(win.resetsAt))) : null)))) : null;
                       }),
                     ),
                 label === 'Codex' && rpc ? h(ResetCards, { rpc, onRefresh }) : null,
@@ -1275,7 +1275,7 @@ window.__ModuleLoader__.load({
                               const fillHeight = clamped > 0 ? Math.max(4, clamped) : 0;
                               const pctText = pct === null ? '—' : formatPercent(pct);
                               const resetText = formatReset(win.resetsAt);
-                              const displayText = typeof win.display === 'string' ? win.display.replace(/\s*\/\s*/g, '/') : '';
+                              const displayText = typeof win.display === 'string' ? win.display.replace(/\s*\/\s*/g, '/').replace(/(\d),(?=\d{3})/g, '$1') : '';
                               // Non-token platforms report concrete usage, e.g. 0.05/10h agent hours.
                               const usageText = Number.isFinite(win.amount) && Number.isFinite(win.limit) && win.limit > 0
                                 ? `${win.amount}/${win.limit}${typeof win.unit === 'string' ? unitLabel(win.unit) : ''}`
@@ -1284,7 +1284,7 @@ window.__ModuleLoader__.load({
                               // Unify sub text to remaining: derive total from 'x/total' and show remaining = total*pct.
                               const remainText = (() => { const src = usageText || displayText; const m = /([\d.]+)\/([\d.]+)\s*([^\d\s]*)$/.exec(src); if (!m || pct === null) return src; const tot = Number(m[2]); const r = Math.max(0, tot - Number(m[1])); const f = (n) => String(Math.round(n * 100) / 100); return `剩 ${f(r)}/${f(tot)}${m[3] || ''}`; })();
                               const winName = windowLabel(win.name);
-                              const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? resetLabel(win.resetsAt) : null].filter(Boolean).join(' · ');
+                              const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? (win.expires ? String(resetLabel(win.resetsAt)).replace('重置', '到期') : resetLabel(win.resetsAt)) : null].filter(Boolean).join(' · ');
                               const rem = (w) => w.remaining ?? (w.used == null ? Infinity : 100 - w.used);
                               const totalIdx = barItems.findIndex((it) => it.win && /^(total\b|总)/i.test(it.win.name || '')); const heroIdx = totalIdx >= 0 ? totalIdx : barItems.reduce((b, it, k) => rem(it.win) < rem(barItems[b].win) ? k : b, 0);
                               const ck = `${record.provider}:${record.account || ''}`; const canToggle = !mergeBars && /^(total\b|总)/i.test(win.name || '') && barItems.length > 1; return h('div', { className: 'ur-vcol', key: `${i}-${pctText}`, title: canToggle ? `${tip} · 点击${openCards[ck] ? '收起' : '展开'}明细` : tip, role: canToggle ? 'button' : undefined, tabIndex: canToggle ? 0 : undefined, 'aria-expanded': canToggle ? !!openCards[ck] : undefined, 'data-toggle': canToggle ? '' : undefined, onClick: canToggle ? () => setOpenCards((p) => ({ ...p, [ck]: !p[ck] })) : undefined, onKeyDown: canToggle ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenCards((p) => ({ ...p, [ck]: !p[ck] })); } } : undefined, 'data-low': pct !== null && pct <= 10 ? '' : undefined, 'data-warn': pct !== null && pct > 10 && pct <= 30 ? '' : undefined, 'data-hero': i === heroIdx ? '' : undefined },
@@ -1293,8 +1293,9 @@ window.__ModuleLoader__.load({
                                   h('span', { className: 'ur-vcol-fill', style: { '--p': String(clamped / 100), '--c': pct === null ? 'var(--ap-ter)' : pct <= 10 ? 'var(--ap-red)' : pct <= 30 ? 'var(--ap-orange)' : 'var(--ap-green)' } })),
                                 h('span', { className: 'ur-vcol-name' }, name),
                                 remainText ? h('span', { className: 'ur-vcol-sub' }, remainText) : null,
-                                !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, resetLabel(win.resetsAt)) : null);
+                                !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, (win.expires ? String(resetLabel(win.resetsAt)).replace('重置', '到期') : resetLabel(win.resetsAt))) : null);
                             })),
+                          ...(record.notes || []).map((t, k) => h('div', { className: 'ur-note ur-oq-hint', key: `note-${k}` }, t)),
                           (() => { const tw = (record.windows || []).find((w) => /^(total\b|总)/i.test(w.name || '')); if (!tw || !tw.resetsAt) return null; const ms = new Date(tw.resetsAt).getTime() - Date.now(); const pct = tw.remaining ?? (tw.used == null ? null : 100 - tw.used); if (!(ms > 0 && ms <= 48 * 3600e3) || pct === null || pct < 30) return null; const left = Number.isFinite(tw.amount) && Number.isFinite(tw.limit) ? `${Math.max(0, +(tw.limit - tw.amount).toFixed(2))}${typeof tw.unit === 'string' ? unitLabel(tw.unit) : ''}` : formatPercent(pct); return h('div', { className: 'ur-note ur-expire', key: 'expire' }, `额度快过期了，还剩 ${left}`); })(),
                           sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, resetLabel((record.windows || []).find((w) => formatReset(w.resetsAt) === sharedReset)?.resetsAt)) : null,
                         ]

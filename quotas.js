@@ -92,6 +92,18 @@ function pickAccount(records, allowedNames) {
 }
 
 // Keep quota pools separate and omit account identities and arbitrary upstream text.
+// No explicit total but several pools in one unit (e.g. Doubao 订阅额度 + 活动赠送额度): add a synthetic total.
+function withTotal(ws) {
+  if (!Array.isArray(ws) || ws.some(w => /^(total\b|总)/i.test(w.name || ''))) return ws
+  const pool = ws.filter(w => Number.isFinite(w.limit) && w.limit > 0)
+  if (pool.length < 2 || new Set(pool.map(w => w.unit)).size !== 1) return ws
+  const used = pool.reduce((t, w) => t + (Number.isFinite(w.amount) ? w.amount : (w.used ?? 0) * w.limit / 100), 0)
+  const limit = pool.reduce((t, w) => t + w.limit, 0)
+  const remaining = Math.round((1 - used / limit) * 1000) / 10
+  const resets = pool.map(w => w.resetsAt).filter(Boolean).sort()
+  return [{ name: 'Total credits', used: Math.round((100 - remaining) * 10) / 10, remaining, resetsAt: resets[0] || null, display: null, amount: Math.round(used * 100) / 100, limit, unit: pool[0].unit, expires: false, synthetic: true }, ...ws]
+}
+
 function otherProviders(records) {
   return records.filter(record => record && typeof record.provider === 'string' && !['codex', 'agy-cli'].includes(record.provider))
     .slice(0, 100).map(record => ({
@@ -105,19 +117,21 @@ function otherProviders(records) {
         : typeof record.user === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(record.user.trim()) && record.provider === 'aws-quick' ? record.user.trim().slice(0, 60) : null,
       kind: record.kind === 'balance' ? 'balance' : record.kind === 'subscription' ? 'subscription' : 'unknown',
       status: record.error ? 'unavailable' : 'available',
+      // Text-only rows such as Doubao's 每日签到 hint, shown as a note under the bars.
+      notes: Array.isArray(record.windows) ? record.windows.filter(w => w && w.text === true && typeof w.name === 'string').map(w => w.name.slice(0, 80)).slice(0, 5) : [],
       // Short failure reason for the card, e.g. '502'.
       errorText: record.error ? String(typeof record.error === 'object' ? (record.error.status || record.error.code || record.error.message || '') : record.error).replace(/\s+/g, ' ').slice(0, 80) || null : null,
       readAt: timestamp(record.readAt),
       balance: typeof record.balance === 'string' && /^[\d.,\s$¥€£+\-A-Za-z]{1,60}$/.test(record.balance) ? record.balance : null,
-      windows: Array.isArray(record.windows) ? record.windows.filter(w => w && typeof w === 'object' && w.text !== true).slice(0, 50).map(w => ({
+      windows: withTotal(Array.isArray(record.windows) ? record.windows.filter(w => w && typeof w === 'object' && w.text !== true).slice(0, 50).map(w => ({
         name: typeof w.name === 'string' ? w.name.slice(0, 100) : '额度',
-        used: percentage(w.used), remaining: percentage(w.remaining), resetsAt: timestamp(w.resetsAt),
+        used: percentage(w.used), remaining: percentage(w.remaining), resetsAt: timestamp(w.resetsAt ?? w.runsOutAt), expires: !w.resetsAt && Boolean(w.runsOutAt),
         display: typeof w.display === 'string' ? w.display.slice(0, 100) : null,
         // Non-token platforms (e.g. agent-hours pools) report concrete usage.
         amount: Number.isFinite(w.amount) && w.amount >= 0 ? w.amount : null,
         limit: Number.isFinite(w.limit) && w.limit >= 0 ? w.limit : null,
         unit: typeof w.unit === 'string' && w.unit.length >= 1 && w.unit.length <= 8 ? w.unit : null,
-      })) : [],
+      })) : []),
     }))
 }
 
