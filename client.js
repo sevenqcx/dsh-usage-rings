@@ -153,7 +153,7 @@ window.__ModuleLoader__.load({
 .ur-oq-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.ur-oq-grid.ur-oq-single{grid-template-columns:minmax(0,1fr)}
 .ur-oq-card{display:flex;flex-direction:column;min-width:0;padding:12px 14px;border:1px solid var(--dsw-alias-border-l2);border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-interactive-bg-hover)}
 .ur-oq-head{display:flex;align-items:center;gap:6px;min-width:0;padding-bottom:8px;border-bottom:1px solid var(--dsw-alias-border-l2)}
-.ur-oq-title{font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ur-oq-account{font-size:11px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.ur-oq-title{font-size:12px;font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ur-oq-account{font-size:11px;color:var(--dsw-alias-label-tertiary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.ur-oq-switch{min-width:0;padding:1px 6px;border:1px solid var(--dsw-alias-border-l2);border-radius:999px;background:transparent;font:inherit;font-size:11px;color:var(--dsw-alias-label-secondary);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ur-oq-switch:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-interactive-bg-hover)}
 .ur-oq-time{margin-left:auto;flex:none;font-size:10px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}
 .ur-oq-bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:8px;align-items:start;margin-top:10px}
 .ur-vcol{display:flex;flex-direction:column;align-items:center;min-width:0}
@@ -1162,7 +1162,18 @@ window.__ModuleLoader__.load({
       const rootRef = React.useRef(null);
       const panelRef = React.useRef(null);
       const buttonRef = React.useRef(null);
-      const panelWidth = Array.isArray(records) && records.length > 1 ? 560 : 320;
+      // One card per provider; multiple accounts of a provider are switched in place.
+      const [picked, setPicked] = React.useState({});
+      const groups = [];
+      if (Array.isArray(records)) {
+        const byProvider = new Map();
+        for (const record of records) {
+          let group = byProvider.get(record.provider);
+          if (!group) { group = { provider: record.provider, items: [] }; byProvider.set(record.provider, group); groups.push(group); }
+          group.items.push(record);
+        }
+      }
+      const panelWidth = groups.length > 1 ? 560 : 320;
       const position = usePanelPosition(rootRef, panelWidth, open);
       React.useEffect(() => {
         if (!open) return undefined;
@@ -1179,15 +1190,22 @@ window.__ModuleLoader__.load({
           h('div', { className: 'ur-head' }, h('span', { className: 'ur-head-title' }, '其他模型额度'), h('span', { className: 'ur-head-meta' }, 'Magpie · 剩余比例')),
           !Array.isArray(records) ? h('div', { className: 'ur-note' }, requestState === 'error' ? '额度读取失败' : '其他额度暂不可用') :
           records.length === 0 ? h('div', { className: 'ur-note' }, '暂未发现其他额度') :
-          h('div', { className: records.length === 1 ? 'ur-oq-grid ur-oq-single' : 'ur-oq-grid' },
-            records.map((record, index) => {
+          h('div', { className: groups.length === 1 ? 'ur-oq-grid ur-oq-single' : 'ur-oq-grid' },
+            groups.map((group, index) => {
+              const count = group.items.length;
+              const pos = Math.min(picked[group.provider] ?? 0, count - 1);
+              const record = group.items[pos];
+              const cycle = () => setPicked((prev) => ({ ...prev, [group.provider]: (pos + 1) % count }));
               const readTime = record.readAt ? formatReset(record.readAt) : '';
               const resetTimes = [...new Set((record.windows || []).map((win) => formatReset(win.resetsAt)).filter(Boolean))];
               const sharedReset = resetTimes.length === 1 ? resetTimes[0] : '';
               return h('div', { className: 'ur-oq-card', key: `${record.provider}-${index}` },
                 h('div', { className: 'ur-oq-head' },
                   h('span', { className: 'ur-oq-title' }, providerLabel(record.provider)),
-                  typeof record.account === 'string' ? h('span', { className: 'ur-oq-account', title: record.account }, record.account) : null,
+                  count > 1
+                    ? h('button', { type: 'button', className: 'ur-oq-switch', onClick: cycle, title: `切换账号（${pos + 1}/${count}）`, 'aria-label': `切换 ${providerLabel(record.provider)} 账号，当前第 ${pos + 1} 个，共 ${count} 个` },
+                        `${record.account || `账号 ${pos + 1}`} ⇄ ${pos + 1}/${count}`)
+                    : typeof record.account === 'string' ? h('span', { className: 'ur-oq-account', title: record.account }, record.account) : null,
                   h('span', { className: 'ur-oq-time', title: readTime ? `读取于 ${readTime}` : undefined }, readTime || '时间未知'),
                   record.provider === 'workbuddy'
                     ? h('button', { type: 'button', className: 'ur-checkin', disabled: checkin === 'running', onClick: runCheckin, title: '为所有 WorkBuddy 账号签到', 'aria-label': '为所有 WorkBuddy 账号签到' }, '✓')
