@@ -178,6 +178,60 @@ export async function readActiveAccounts(options = {}) {
   return active
 }
 
+// Magpie records upstream quota 429s (with an exact reset) in limit-notices.json,
+// keyed "account/model". The quotas endpoint does not reflect them, so overlay
+// active notices onto the matching pool: remaining 0, reset at the notice deadline.
+const noticesPathDefault = () => process.env.MAGPIE_LIMIT_NOTICES_PATH || join(homedir(), '.config', 'magpie', 'limit-notices.json')
+
+function poolOfModel(model) {
+  if (/^(claude|gpt)/i.test(model)) return 'Claude & GPT'
+  if (/^gemini/i.test(model)) return 'Gemini'
+  return null
+}
+
+export async function readLimitNotices(options = {}) {
+  const path = options.path ?? noticesPathDefault()
+  let handle
+  try {
+    handle = await open(path, 'r')
+    const { size } = await handle.stat()
+    if (size > maxBytes) return []
+    const buffer = Buffer.alloc(size)
+    await handle.read(buffer, 0, size, 0)
+    const data = JSON.parse(buffer.toString('utf8'))
+    if (!data || typeof data !== 'object') return []
+    return Object.values(data).flatMap((n) => {
+      if (n?.why !== 'quota' || typeof n.key !== 'string' || typeof n.model !== 'string') return []
+      const account = n.key.slice(0, n.key.lastIndexOf('/'))
+      const until = timestamp(n.until)
+      if (!account || !until) return []
+      return [{ account, model: n.model, until }]
+    })
+  } catch {
+    return []
+  } finally {
+    if (handle) await handle.close().catch(() => {})
+  }
+}
+
+export function applyLimitNotices(records, notices, now = Date.now()) {
+  const live = (notices || []).filter((n) => Date.parse(n.until) > now)
+  return records.map((record) => {
+    if (!Array.isArray(record?.windows)) return record
+    // Notice keys may carry a provider prefix ("agy-cli/<account>/<model>").
+    const mine = live.filter((n) => typeof record.user === 'string' && [record.user, `${record.provider}/${record.user}`, `${record.provider}@${record.user}`].includes(n.account))
+    const windows = record.windows.map((w) => {
+      const pool = typeof w?.pool === 'string' ? w.pool : String(w?.name || '').split(' · ')[0]
+      const hit = mine.filter((n) => poolOfModel(n.model) === pool).sort((a, b) => Date.parse(b.until) - Date.parse(a.until))[0]
+      if (hit) return { ...w, used: 100, remaining: 0, resetsAt: hit.until, holdsWhy: undefined, limited: true }
+      // Magpie fills 0% used when it has too little history to estimate: not a real reading.
+      if (w?.holdsWhy === 'low' && w.used === 0) return { ...w, used: null, remaining: null }
+      return w
+    })
+    return { ...record, windows }
+  })
+}
+
 // Emails keep 3 leading chars + domain; other names keep 2 chars at each end.
 export function maskAccount(value) {
   if (typeof value !== 'string' || !value.trim()) return null
@@ -213,6 +267,8 @@ export async function readMagpieQuotas(options = {}) {
     if (options.usagePath !== false) {
       try { activeAccounts = await readActiveAccounts(options.usagePath ? { path: options.usagePath } : {}) } catch { activeAccounts = new Map() }
     }
+    const notices = options.noticesPath === false ? [] : await readLimitNotices(options.noticesPath ? { path: options.noticesPath } : {})
+    payload.data = applyLimitNotices(payload.data, notices)
     const codex = selectProvider(payload.data, 'codex', codexWindows, activeAccounts.get('codex')?.account ?? null)
     const antigravity = selectProvider(payload.data, 'agy-cli', antigravityWindows, activeAccounts.get('agy-cli')?.account ?? null)
     return {

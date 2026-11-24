@@ -333,6 +333,7 @@ window.__ModuleLoader__.load({
 .ur-vcol .ur-vcol-fill{position:absolute;inset:0;display:block;width:100%;height:100%;transform:scaleX(var(--p,0));transform-origin:left center;animation:none;transition:none;opacity:1;visibility:visible}
 .ur-vcol-pct{grid-area:pct;justify-self:end;text-align:right;line-height:1}
 /* smaller check-in button */.ur-oq-head .ur-checkin,.ur-checkin{width:16px;height:16px;min-width:0;min-height:0;padding:0;flex:none;border-radius:8px;font-size:9px;line-height:16px;align-self:center}
+/* align first quota row across cards: header always reserves title+account height; rows start at top */.ur-oq-head{min-height:40px;align-content:flex-start}.ur-oq-bars{justify-content:flex-start}
 `;
 
     const percentOf = (win) => {
