@@ -111,9 +111,12 @@ export function apply(ctx) {
     }), 'usage-rings: workbuddy check-in');
   });
 
+  const isRecord = (value) => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  const rpcPayload = (body) => (isRecord(body?.payload) ? body.payload : (isRecord(body) ? body : {}));
+
   for (const [path, handler] of [
     ['/api/dsh-usage-rings/reset-cards', () => readResetCards()],
-    ['/api/dsh-usage-rings/use-reset-card', (body) => useResetCard(body)],
+    ['/api/dsh-usage-rings/use-reset-card', (body) => useResetCard(rpcPayload(body))],
   ]) {
     ctx.inject(['connection'], (c) => {
       c.effect(() => c.connection.fetch.register({
@@ -142,9 +145,11 @@ export function apply(ctx) {
         } catch {
           return new Response('invalid JSON', { status: 400 });
         }
+        const payload = rpcPayload(body);
+        const sessionId = typeof payload.sessionId === 'string' && payload.sessionId ? payload.sessionId : undefined;
         let groupSteps;
         try {
-          const session = body?.sessionId && getSession ? getSession(body.sessionId) : null;
+          const session = sessionId && getSession ? getSession(sessionId) : null;
           groupSteps = session && usageHandle ? usageHandle.stateOf(session)?.groupSteps : undefined;
         } catch {
           groupSteps = undefined;
@@ -152,7 +157,7 @@ export function apply(ctx) {
         return Response.json({
           type: 'server-response',
           rpcId: body?.rpcId,
-          result: { ok: true, value: await readMagpieRoutes(body?.sessionId, { groupSteps }) },
+          result: { ok: true, value: await readMagpieRoutes(sessionId, { groupSteps }) },
         });
       },
     }), 'usage-rings: magpie routes');

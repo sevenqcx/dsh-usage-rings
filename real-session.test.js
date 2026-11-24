@@ -16,6 +16,7 @@ import { join } from 'node:path'
 import vm from 'node:vm'
 
 import { applyUsageByModelEvent, initUsageByModel, viewUsageByModel } from './usage-by-model.js'
+import { readMagpieRoutes } from './magpie-routes.js'
 
 const DSH_HOME = join(homedir(), '.dsh')
 const CACHE_DIR = join(DSH_HOME, 'storages', 'session_projcache', 'sessions')
@@ -84,14 +85,17 @@ function replay(file) {
 }
 
 /** Render the panel with values supplied by the caller. */
-async function renderPanel({ tokenUsage, sessionStats, modelSelection, usageByModel, open = true }) {
+async function renderPanel({ tokenUsage, sessionStats, modelSelection, usageByModel, routeState = null, open = true }) {
   const raw = readFileSync(new URL('./client.js', import.meta.url), 'utf8')
   const source = raw.replace('    function UsageRings({ rpc }) {', '    globalThis.testActivityStats = ActivityStats;\n    function UsageRings({ rpc }) {')
+  // useState call order inside ActivityStats: [open, routeState, panel position].
+  const useStateSlots = [open, routeState, true]
+  let useStateSlot = 0
   const React = {
     createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat() }),
     createPortal: node => node,
     Fragment: Symbol('Fragment'),
-    useState: () => [open, () => {}],
+    useState: () => [useStateSlots[Math.min(useStateSlot++, useStateSlots.length - 1)], () => {}],
     useRef: () => ({ current: null }),
     useId: () => ':r0:',
     useEffect: () => {},
@@ -137,20 +141,35 @@ test('the fold reproduces the host token totals on a real Session log', { skip: 
 })
 
 test('the panel renders real per-model numbers for a real Session', { skip: sample.length === 0 && 'no local Session log with a host projection cache' }, async () => {
-  for (const { rows: hostRows, log } of sample) {
+  for (const { id, rows: hostRows, log } of sample) {
     const replayed = replay(log)
     if (replayed === null) return
     const view = viewUsageByModel(replayed.state)
     const top = view.models[0]
+    // Group routes are hidden by design: the panel names the concrete models
+    // the Magpie gateway served, resolved from the real local usage log.
+    const routes = await readMagpieRoutes(id, { groupSteps: replayed.state.groupSteps })
+    const concrete = routes.groups?.[top.model]?.models?.[0]?.model
     const text = await renderPanel({
       tokenUsage: hostRows.tokenUsage.val,
       sessionStats: hostRows.sessionStats.val,
       modelSelection: hostRows.modelSelection.val,
       usageByModel: view,
+      routeState: { groups: routes.groups, lastServed: routes.lastServed, loading: false, error: false },
     })
     assert.match(text, /本会话模型用量/)
-    assert.ok(text.includes(top.model), `panel must name the top route ${top.model}`)
-    assert.match(text, new RegExp(`${Math.round((top.tokens / view.total) * 100)}%`), 'panel must show the top route share')
+    assert.ok(concrete, 'magpie routes must resolve the top group route into a concrete model')
+    assert.ok(text.includes(concrete), `panel must name the top served model ${concrete}`)
+    assert.doesNotMatch(text, /group\/smart-split/, 'smart-route labels stay hidden')
+    // Don't re-derive client's group-expansion merge here; instead verify the
+    // panel's own arithmetic: every "X万 · N%" row share must equal
+    // round(X tokens / 合计 total).
+    const total = Number(text.match(/合计\s*([\d,.]+)万/)?.[1]?.replace(/,/g, '')) * 10000
+    assert.ok(total > 0, 'panel must show a 合计 token figure')
+    for (const [, amount, pct] of text.matchAll(/([\d,.]+)万\s*·\s*(\d+)%/g)) {
+      const expected = Math.round(((Number(amount.replace(/,/g, '')) * 10000) / total) * 100)
+      assert.equal(expected, Number(pct), `${pct}% row share must match ${amount}万 of ${total} tokens`)
+    }
     assert.match(text, /合计/)
     assert.doesNotMatch(text, /重开一次 DSH 后显示/, 'no placeholder once the projection reports data')
     assert.doesNotMatch(text, /undefined|NaN|null/)

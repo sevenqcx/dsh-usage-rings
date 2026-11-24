@@ -2,7 +2,7 @@
   "name": "dsh-usage-rings",
   "version": "1.0.0",
   "type": "module",
-  "description": "Composer dock stats (context, cache hit, Tok/s, per-model token usage) and Codex/Gemini/Magpie quota gauges for DeepSeek Harness.",
+  "description": "Replaces composer dock stats with context, cache-hit, Tok/s, and per-model usage panels, plus Codex, Gemini, and multi-provider quota gauges read from a local Magpie gateway (127.0.0.1:3425).",
   "license": "MIT",
   "author": "Seven7cx",
   "repository": {

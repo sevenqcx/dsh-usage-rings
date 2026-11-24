@@ -4,7 +4,7 @@ import { apply } from './index.js'
 
 const tick = () => new Promise(resolve => setTimeout(resolve, 0))
 
-function fakeContext() {
+function fakeContext({ sessions, stateOf } = {}) {
   const registered = []
   const quotas = []
   const effects = []
@@ -17,8 +17,14 @@ function fakeContext() {
           return () => { if (typeof dispose === 'function') dispose() }
         },
         logger: { error() {} },
+        ...(names.includes('sessions') && sessions ? { sessions } : {}),
         ...(names.includes('sessionProjections') ? {
-          sessionProjections: { register: async (definition) => { registered.push(definition); return { dispose: async () => {} } } },
+          sessionProjections: {
+            register: async (definition) => {
+              registered.push(definition)
+              return { dispose: async () => {}, ...(stateOf ? { stateOf } : {}) }
+            },
+          },
         } : {}),
         ...(names.includes('connection') ? {
           connection: { fetch: { register: (route) => { quotas.push(route); return { dispose() {} } } } },
@@ -87,5 +93,46 @@ test('reset card RPCs relay account selection and errors through their envelope'
     assert.equal(used.rpcId, 'use')
     assert.equal(used.result.value.ok, true)
     assert.equal(calls.length, 2)
+  } finally { globalThis.fetch = original }
+})
+
+test('use-reset-card and magpie-routes unwrap DSH RPC payload envelopes', async () => {
+  const original = globalThis.fetch
+  const calls = []
+  const seenSessions = []
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url: String(url), method: options.method })
+    return options.method === 'GET'
+      ? Response.json({ object: 'list', data: [{ provider: 'codex', user: 'alice', resets: { count: 1, until: null, each: [{ id: 'c1', until: null }] } }] })
+      : Response.json({ code: 'reset', windows: 1 })
+  }
+  try {
+    const { ctx, quotas } = fakeContext({
+      sessions: {
+        get(id) {
+          seenSessions.push(id)
+          return { id }
+        },
+      },
+      stateOf: () => ({ groupSteps: [] }),
+    })
+    apply(ctx)
+    await tick()
+    const invoke = async (path, body) => (await quotas.find(route => route.path.endsWith(path)).fetch(new Request('http://localhost/api', { method: 'POST', body: JSON.stringify(body) }))).json()
+
+    await invoke('/reset-cards', { rpcId: 'read-env', payload: {} })
+    const used = await invoke('/use-reset-card', { rpcId: 'use-env', payload: { user: 'alice', credit: 'c1' } })
+    assert.equal(used.rpcId, 'use-env')
+    assert.equal(used.result.value.ok, true)
+    assert.equal(calls.length, 2)
+
+    const nullBody = await invoke('/use-reset-card', null)
+    assert.equal(nullBody.result.value.ok, false)
+    assert.equal(nullBody.result.value.error, 'user and credit are required')
+
+    const routes = await invoke('/magpie-routes', { rpcId: 'routes-env', payload: { sessionId: 'session-test-envelope-only' } })
+    assert.equal(routes.rpcId, 'routes-env')
+    assert.equal(routes.result.ok, true)
+    assert.deepEqual(seenSessions, ['session-test-envelope-only'])
   } finally { globalThis.fetch = original }
 })
