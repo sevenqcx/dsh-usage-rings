@@ -1258,7 +1258,7 @@ window.__ModuleLoader__.load({
                   ? h('div', { className: 'ur-note', role: 'status' }, checkin === 'running' ? '正在请求签到…' : checkin === 'finished' ? '签到命令已完成，请查看额度确认结果' : checkin === 'busy' ? '签到请求正在进行' : '签到命令未完成')
                   : null,
                 record.status === 'unavailable'
-                  ? h('div', { className: 'ur-note' }, '额度暂不可用')
+                  ? h('div', { className: 'ur-note ur-fail' }, ['读取失败', record.errorText ? `：${record.errorText}` : '', record.readAt ? ` · 上次成功 ${new Date(record.readAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : ''].join(''))
                   : record.kind === 'balance'
                     ? [
                         h('div', { className: 'ur-oq-balance', key: 'balance' },

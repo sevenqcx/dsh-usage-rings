@@ -105,6 +105,8 @@ function otherProviders(records) {
         : typeof record.user === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(record.user.trim()) && record.provider === 'aws-quick' ? record.user.trim().slice(0, 60) : null,
       kind: record.kind === 'balance' ? 'balance' : record.kind === 'subscription' ? 'subscription' : 'unknown',
       status: record.error ? 'unavailable' : 'available',
+      // Short failure reason for the card, e.g. '502'.
+      errorText: record.error ? String(typeof record.error === 'object' ? (record.error.status || record.error.code || record.error.message || '') : record.error).replace(/\s+/g, ' ').slice(0, 80) || null : null,
       readAt: timestamp(record.readAt),
       balance: typeof record.balance === 'string' && /^[\d.,\s$¥€£+\-A-Za-z]{1,60}$/.test(record.balance) ? record.balance : null,
       windows: Array.isArray(record.windows) ? record.windows.filter(w => w && typeof w === 'object' && w.text !== true).slice(0, 50).map(w => ({
