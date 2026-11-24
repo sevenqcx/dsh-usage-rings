@@ -1195,8 +1195,13 @@ window.__ModuleLoader__.load({
               const count = group.items.length;
               const pos = Math.min(picked[group.provider] ?? 0, count - 1);
               const record = group.items[pos];
+              // Single-window accounts: put every account's bar side by side, labelled by alias.
+              const mergeBars = count > 1 && group.items.every((it) => it.kind !== 'balance' && it.status !== 'unavailable' && (it.windows || []).length === 1);
+              const barItems = mergeBars
+                ? group.items.map((it, i) => ({ win: it.windows[0], label: it.alias || it.account || `账号 ${i + 1}`, full: [it.alias, it.account].filter(Boolean).join(' · ') }))
+                : (record.windows || []).map((win) => ({ win, label: windowLabel(win.name), full: '' }));
               const readTime = record.readAt ? formatReset(record.readAt) : '';
-              const resetTimes = [...new Set((record.windows || []).map((win) => formatReset(win.resetsAt)).filter(Boolean))];
+              const resetTimes = [...new Set(barItems.map(({ win }) => formatReset(win.resetsAt)).filter(Boolean))];
               const sharedReset = resetTimes.length === 1 ? resetTimes[0] : '';
               return h('div', { className: 'ur-oq-card', key: `${record.provider}-${index}` },
                 h('div', { className: 'ur-oq-head' },
@@ -1205,6 +1210,7 @@ window.__ModuleLoader__.load({
                     // Alias (user-chosen in Magpie) first, masked account as fallback; same slot for 1 or N accounts.
                     const label = record.alias || record.account || (count > 1 ? `账号 ${pos + 1}` : '');
                     const tip = [record.alias, record.account].filter(Boolean).join(' · ');
+                    if (mergeBars) return null;
                     if (count === 1) return label ? h('span', { className: 'ur-oq-account', title: tip || undefined }, label) : null;
                     return h('button', {
                       type: 'button', className: 'ur-oq-switch',
@@ -1232,7 +1238,7 @@ window.__ModuleLoader__.load({
                     : record.windows?.length
                       ? [
                           h('div', { className: 'ur-oq-bars', key: 'bars' },
-                            record.windows.map((win, i) => {
+                            barItems.map(({ win, label, full }, i) => {
                               const pct = win.remaining ?? (win.used == null ? null : 100 - win.used);
                               const clamped = pct === null ? 0 : Math.max(0, Math.min(100, pct));
                               const fillHeight = clamped > 0 ? Math.max(4, clamped) : 0;
@@ -1243,8 +1249,9 @@ window.__ModuleLoader__.load({
                               const usageText = Number.isFinite(win.amount) && Number.isFinite(win.limit) && win.limit > 0
                                 ? `${win.amount}/${win.limit}${typeof win.unit === 'string' ? win.unit : ''}`
                                 : '';
-                              const name = windowLabel(win.name);
-                              const tip = [name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? `${resetText} 重置` : null].filter(Boolean).join(' · ');
+                              const name = label;
+                              const winName = windowLabel(win.name);
+                              const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? `${resetText} 重置` : null].filter(Boolean).join(' · ');
                               return h('div', { className: 'ur-vcol', key: i, title: tip },
                                 h('span', { className: 'ur-vcol-pct' }, pctText),
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
