@@ -1230,7 +1230,7 @@ window.__ModuleLoader__.load({
               const mergeBars = count > 1 && group.items.every((it) => it.kind !== 'balance' && it.status !== 'unavailable' && (it.windows || []).length === 1);
               const barItems = mergeBars
                 ? group.items.map((it, i) => ({ win: it.windows[0], label: it.alias || it.account || `账号 ${i + 1}`, full: [it.alias, it.account].filter(Boolean).join(' · ') }))
-                : [...(record.windows || [])].sort((a, b) => (b.name === 'Total credits') - (a.name === 'Total credits')).map((win) => ({ win, label: windowLabel(win.name), full: '' }));
+                : [...(record.windows || [])].sort((a, b) => (/^(total\b|总)/i.test(b.name || '')) - (/^(total\b|总)/i.test(a.name || ''))).map((win) => ({ win, label: windowLabel(win.name), full: '' }));
               const readTime = record.readAt ? formatReset(record.readAt) : '';
               const resetTimes = [...new Set(barItems.map(({ win }) => formatReset(win.resetsAt)).filter(Boolean))];
               const sharedReset = resetTimes.length === 1 ? resetTimes[0] : '';
@@ -1269,7 +1269,7 @@ window.__ModuleLoader__.load({
                     : record.windows?.length
                       ? [
                           h('div', { className: 'ur-oq-bars', key: 'bars' },
-                            barItems.map(({ win, label, full }, i) => { if (!mergeBars && !openCards[`${record.provider}:${record.account || ''}`]) { const ti = barItems.findIndex((it) => it.win && it.win.name === 'Total credits'); if (ti >= 0 && i !== ti) return null; }
+                            barItems.map(({ win, label, full }, i) => { if (!mergeBars && !openCards[`${record.provider}:${record.account || ''}`]) { const ti = barItems.findIndex((it) => it.win && /^(total\b|总)/i.test(it.win.name || '')); if (ti >= 0 && i !== ti) return null; }
                               const pct = win.remaining ?? (win.used == null ? null : 100 - win.used);
                               const clamped = pct === null ? 0 : Math.max(0, Math.min(100, pct));
                               const fillHeight = clamped > 0 ? Math.max(4, clamped) : 0;
@@ -1286,8 +1286,8 @@ window.__ModuleLoader__.load({
                               const winName = windowLabel(win.name);
                               const tip = [mergeBars ? `${full || name} · ${winName}` : name, pct !== null ? `剩余 ${pctText}` : null, displayText || usageText, resetText ? resetLabel(win.resetsAt) : null].filter(Boolean).join(' · ');
                               const rem = (w) => w.remaining ?? (w.used == null ? Infinity : 100 - w.used);
-                              const totalIdx = barItems.findIndex((it) => it.win && it.win.name === 'Total credits'); const heroIdx = totalIdx >= 0 ? totalIdx : barItems.reduce((b, it, k) => rem(it.win) < rem(barItems[b].win) ? k : b, 0);
-                              const ck = `${record.provider}:${record.account || ''}`; const canToggle = !mergeBars && win.name === 'Total credits' && barItems.length > 1; return h('div', { className: 'ur-vcol', key: `${i}-${pctText}`, title: canToggle ? `${tip} · 点击${openCards[ck] ? '收起' : '展开'}明细` : tip, role: canToggle ? 'button' : undefined, tabIndex: canToggle ? 0 : undefined, 'aria-expanded': canToggle ? !!openCards[ck] : undefined, 'data-toggle': canToggle ? '' : undefined, onClick: canToggle ? () => setOpenCards((p) => ({ ...p, [ck]: !p[ck] })) : undefined, onKeyDown: canToggle ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenCards((p) => ({ ...p, [ck]: !p[ck] })); } } : undefined, 'data-low': pct !== null && pct <= 10 ? '' : undefined, 'data-warn': pct !== null && pct > 10 && pct <= 30 ? '' : undefined, 'data-hero': i === heroIdx ? '' : undefined },
+                              const totalIdx = barItems.findIndex((it) => it.win && /^(total\b|总)/i.test(it.win.name || '')); const heroIdx = totalIdx >= 0 ? totalIdx : barItems.reduce((b, it, k) => rem(it.win) < rem(barItems[b].win) ? k : b, 0);
+                              const ck = `${record.provider}:${record.account || ''}`; const canToggle = !mergeBars && /^(total\b|总)/i.test(win.name || '') && barItems.length > 1; return h('div', { className: 'ur-vcol', key: `${i}-${pctText}`, title: canToggle ? `${tip} · 点击${openCards[ck] ? '收起' : '展开'}明细` : tip, role: canToggle ? 'button' : undefined, tabIndex: canToggle ? 0 : undefined, 'aria-expanded': canToggle ? !!openCards[ck] : undefined, 'data-toggle': canToggle ? '' : undefined, onClick: canToggle ? () => setOpenCards((p) => ({ ...p, [ck]: !p[ck] })) : undefined, onKeyDown: canToggle ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenCards((p) => ({ ...p, [ck]: !p[ck] })); } } : undefined, 'data-low': pct !== null && pct <= 10 ? '' : undefined, 'data-warn': pct !== null && pct > 10 && pct <= 30 ? '' : undefined, 'data-hero': i === heroIdx ? '' : undefined },
                                 h('span', { className: 'ur-vcol-pct' }, pctText),
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
                                   h('span', { className: 'ur-vcol-fill', style: { '--p': String(clamped / 100), '--c': pct === null ? 'var(--ap-ter)' : pct <= 10 ? 'var(--ap-red)' : pct <= 30 ? 'var(--ap-orange)' : 'var(--ap-green)' } })),
@@ -1295,7 +1295,7 @@ window.__ModuleLoader__.load({
                                 remainText ? h('span', { className: 'ur-vcol-sub' }, remainText) : null,
                                 !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, resetLabel(win.resetsAt)) : null);
                             })),
-                          (() => { const tw = (record.windows || []).find((w) => w.name === 'Total credits'); if (!tw || !tw.resetsAt) return null; const ms = new Date(tw.resetsAt).getTime() - Date.now(); const pct = tw.remaining ?? (tw.used == null ? null : 100 - tw.used); if (!(ms > 0 && ms <= 48 * 3600e3) || pct === null || pct < 30) return null; const left = Number.isFinite(tw.amount) && Number.isFinite(tw.limit) ? `${Math.max(0, +(tw.limit - tw.amount).toFixed(2))}${typeof tw.unit === 'string' ? unitLabel(tw.unit) : ''}` : formatPercent(pct); return h('div', { className: 'ur-note ur-expire', key: 'expire' }, `额度快过期了，还剩 ${left}`); })(),
+                          (() => { const tw = (record.windows || []).find((w) => /^(total\b|总)/i.test(w.name || '')); if (!tw || !tw.resetsAt) return null; const ms = new Date(tw.resetsAt).getTime() - Date.now(); const pct = tw.remaining ?? (tw.used == null ? null : 100 - tw.used); if (!(ms > 0 && ms <= 48 * 3600e3) || pct === null || pct < 30) return null; const left = Number.isFinite(tw.amount) && Number.isFinite(tw.limit) ? `${Math.max(0, +(tw.limit - tw.amount).toFixed(2))}${typeof tw.unit === 'string' ? unitLabel(tw.unit) : ''}` : formatPercent(pct); return h('div', { className: 'ur-note ur-expire', key: 'expire' }, `额度快过期了，还剩 ${left}`); })(),
                           sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, resetLabel((record.windows || []).find((w) => formatReset(w.resetsAt) === sharedReset)?.resetsAt)) : null,
                         ]
                       : h('div', { className: 'ur-note' }, '未提供额度明细'));
