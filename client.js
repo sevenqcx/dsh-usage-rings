@@ -175,7 +175,9 @@ window.__ModuleLoader__.load({
 .ur-oq-time{margin-left:auto;flex:none;font-variant-numeric:tabular-nums}
 .ur-oq-bars{justify-content:space-evenly}
 .ur-vcol{flex-direction:column;min-width:0}
-.ur-vcol[data-warn] .ur-vcol[data-toggle]{cursor:pointer}
+.ur-vcol[data-warn] .ur-vcol-pct{color:var(--dsw-alias-state-warn-label, var(--dsw-alias-state-error-primary))}
+.ur-vcol[data-low] .ur-vcol-pct{color:var(--dsw-alias-state-error-primary)}
+.ur-vcol[data-toggle]{cursor:pointer}
 .ur-vcol[data-toggle]:focus-visible{outline:1px solid var(--dsw-alias-label-tertiary);outline-offset:2px}
 .ur-expire{color:var(--ap-orange)}
 .ur-vcol-track{align-items:flex-end}
@@ -315,8 +317,8 @@ window.__ModuleLoader__.load({
 .ur-vcol[data-hero] .ur-vcol-pct{font-size:28px;line-height:32px;font-weight:600;letter-spacing:-.03em;color:var(--dsw-alias-label-primary)}
 .ur-vcol[data-hero] .ur-vcol-name{color:var(--dsw-alias-label-primary)}
 .ur-vcol[data-hero] .ur-vcol-fill{background:var(--dsw-alias-label-primary)}
-.ur-vcol[data-low] .ur-vcol-pct{color:var(--ap-red)}
-.ur-vcol[data-low] .ur-vcol-fill{background:var(--ap-red)}
+.ur-vcol[data-low] .ur-vcol-pct{color:var(--dsw-alias-state-error-primary)}
+.ur-vcol[data-low] .ur-vcol-fill{background:var(--dsw-alias-state-error-primary)}
 .ur-oq-bars{gap:10px}
 .ur-oq-bal-v{font-size:28px;line-height:32px;font-weight:600}
 /* step: one panel-level update time; smaller currency symbol */.ur-oq-top{margin:0 2px 8px;text-align:right;font-size:11px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}
@@ -619,7 +621,7 @@ window.__ModuleLoader__.load({
                             h('div', { className: 'ur-quota-ring-body' },
                               h('div', { className: 'ur-quota-ring-line' },
                                 h('span', { className: 'ur-quota-label' }, windowLabel(win.name.replace(`${group.name} · `, ''))),
-                                h('span', { className: 'ur-quota-ring-pct' }, formatPercent(win.pct))),
+                                h('span', { className: 'ur-quota-ring-pct', style: win.pct !== null && win.pct <= 30 ? { color: toneOf(win.pct) } : undefined }, formatPercent(win.pct))),
                               formatReset(win.resetsAt) ? h('div', { className: 'ur-quota-ring-reset' }, (win.expires ? String(resetLabel(win.resetsAt)).replace('重置', '到期') : resetLabel(win.resetsAt))) : null)))) : null;
                       }),
                     ),
@@ -1417,7 +1419,7 @@ window.__ModuleLoader__.load({
                               const ck = mergeBars ? record.provider : `${record.provider}:${record.account || ''}`; const canToggle = /^(total\b|总)/i.test(win.name || '') && barItems.length > 1; return h('div', { className: 'ur-vcol', key: `${i}-${win.name || ''}`, title: canToggle ? `${tip} · 点击${openCards[ck] ? '收起' : '展开'}明细` : tip, role: canToggle ? 'button' : undefined, tabIndex: canToggle ? 0 : undefined, 'aria-expanded': canToggle ? !!openCards[ck] : undefined, 'data-toggle': canToggle ? '' : undefined, onClick: canToggle ? () => setOpenCards((p) => ({ ...p, [ck]: !p[ck] })) : undefined, onKeyDown: canToggle ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenCards((p) => ({ ...p, [ck]: !p[ck] })); } } : undefined, 'data-low': pct !== null && pct <= 10 ? '' : undefined, 'data-warn': pct !== null && pct > 10 && pct <= 30 ? '' : undefined, 'data-hero': i === heroIdx ? '' : undefined },
                                 h('span', { className: 'ur-vcol-pct' }, pctText),
                                 h('div', { className: 'ur-vcol-track', 'aria-hidden': true },
-                                  h('span', { className: 'ur-vcol-fill', style: { '--p': String(clamped / 100), '--c': pct === null ? 'var(--ap-ter)' : pct <= 10 ? 'var(--ap-red)' : pct <= 30 ? 'var(--ap-orange)' : 'var(--ap-green)' } })),
+                                  h('span', { className: 'ur-vcol-fill', style: { '--p': String(clamped / 100), '--c': fillOf(pct) } })),
                                 h('span', { className: 'ur-vcol-name' }, name),
                                 remainText ? h('span', { className: 'ur-vcol-sub' }, remainText) : null,
                                 !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, (win.expires ? String(resetLabel(win.resetsAt)).replace('重置', '到期') : resetLabel(win.resetsAt))) : null);

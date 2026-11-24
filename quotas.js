@@ -225,7 +225,7 @@ export function applyLimitNotices(records, notices, now = Date.now()) {
       const hit = mine.filter((n) => poolOfModel(n.model) === pool).sort((a, b) => Date.parse(b.until) - Date.parse(a.until))[0]
       if (hit) return { ...w, used: 100, remaining: 0, resetsAt: hit.until, holdsWhy: undefined, limited: true }
       // Magpie fills 0% used when it has too little history to estimate: not a real reading.
-      if (w?.holdsWhy === 'low' && w.used === 0) return { ...w, used: null, remaining: null }
+      if (w?.holdsWhy === 'low' && w.used === 0 && !(Number.isFinite(w.limit) && w.limit > 0)) return { ...w, used: null, remaining: null }
       return w
     })
     return { ...record, windows }
