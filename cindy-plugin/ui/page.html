@@ -3,40 +3,36 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Magpie 额度</title>
 <style>
-:root{color-scheme:light dark;--bg:#fbfbf9;--tx:#1d1d1f;--sub:#86868b;--line:#e8e8e6;--track:#ececea;--fill:#6e6e70;--bad:#e5484d;--btn:#f2f2f0}
-@media (prefers-color-scheme:dark){:root{--bg:#1f1f21;--tx:#f2f2f4;--sub:#9a9aa0;--line:#333336;--track:#333336;--fill:#b8b8bc;--btn:#2a2a2d}}
+:root{color-scheme:light dark;--bg:#fcfcfa;--tx:#1d1d1f;--sub:#86868b;--line:#e9e9e6;--track:#ededea;--fill:#6b6b6e;--bad:#e5484d}
+@media (prefers-color-scheme:dark){:root{--bg:#1f1f21;--tx:#f2f2f4;--sub:#9a9aa0;--line:#333336;--track:#353538;--fill:#b8b8bc}}
 *{box-sizing:border-box}
-body{margin:0;padding:18px 22px 14px;background:var(--bg);color:var(--tx);font:14px/1.5 -apple-system,"PingFang SC",system-ui,sans-serif;min-width:340px;max-width:420px}
-.sec{padding:14px 0;border-bottom:1px solid var(--line)}
-.sec:last-of-type{border-bottom:0}
-.hd{display:flex;align-items:center;justify-content:space-between;color:var(--sub);font-size:13px;margin-bottom:6px}
-.hd b{color:var(--tx);font-size:14px;font-weight:600}
-.tag{border:1px solid var(--line);border-radius:999px;padding:1px 10px;font-size:12px;color:var(--sub)}
-.w{margin-top:10px}
-.w .t{font-size:15px;margin-bottom:6px}
-.w.low .t{color:var(--bad)}
+body{margin:0;padding:6px 22px 4px;background:var(--bg);color:var(--tx);font:14px/1.5 -apple-system,"PingFang SC",system-ui,sans-serif;width:380px;max-width:100%}
+.acc{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 12px;border-bottom:1px solid var(--line);color:var(--sub);font-size:15px}
+.acc .id{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.acc .id b{color:var(--sub);font-weight:400;margin-right:10px}
+.pill{flex:none;border:1px solid var(--line);border-radius:999px;padding:2px 12px;font-size:13px}
+.blk{padding:12px 0 14px;border-bottom:1px solid var(--line)}
+.w{margin-top:6px}.w+.w{margin-top:14px}
+.w .t{font-size:16px;margin-bottom:8px}.w.low .t{color:var(--bad)}
 .bar{height:6px;border-radius:3px;background:var(--track);overflow:hidden}
-.bar i{display:block;height:100%;border-radius:3px;background:var(--fill)}
-.w.low .bar i{background:var(--bad)}
-.m{display:flex;justify-content:space-between;margin-top:6px;font-size:13px}
-.m .r{color:var(--sub)}
-.big{font-size:20px;font-weight:600;margin-top:6px}
-.note{color:var(--sub);font-size:12.5px;margin-top:6px}
-.row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px;color:var(--sub)}
-button.s{background:var(--btn);border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:2px 10px;cursor:pointer;font:inherit;font-size:12.5px}
-button.s.danger{color:var(--bad);border-color:var(--bad)}
-.foot{display:flex;justify-content:space-between;color:var(--sub);font-size:12.5px;padding-top:10px;border-top:1px solid var(--line)}
-.foot button{background:none;border:0;color:var(--sub);cursor:pointer;font:inherit}
+.bar i{display:block;height:100%;min-width:6px;border-radius:3px;background:var(--fill)}.w.low .bar i{background:var(--bad)}
+.m{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:15px}
+.m .r{color:var(--sub)}.m .x{margin-left:auto;color:var(--sub)}
+.note{color:var(--sub);font-size:14px;margin-top:8px}
+.big{font-size:15px;color:var(--sub)}
+.act{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:var(--sub);font-size:14px}
+.act button,.foot button{background:none;border:0;color:var(--tx);cursor:pointer;font:inherit;font-weight:600;padding:0}
+.act button.danger{color:var(--bad)}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:12px 0 14px;font-size:14px;color:var(--sub)}
 </style>
-<div id="list"></div>
-<div class="foot"><span id="stamp">读取中…</span><button id="refresh">刷新</button></div>
+<div id="list"><div class="note" style="padding:16px 0">读取中…</div></div>
+<div class="foot"><span id="stamp"></span><button id="refresh">↻ 刷新</button></div>
 <script type="module">
 import { App } from '@modelcontextprotocol/ext-apps';
-const app = new App({ name: 'Magpie 额度', version: '1.2.1' }, {}, { autoResize: true });
+const app = new App({ name: 'Magpie 额度', version: '1.3.0' }, {}, { autoResize: true });
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const left = (w) => w.remaining != null ? w.remaining : (w.used != null ? 100 - w.used : null);
-const NAMES = { '5 hours': '5 小时', '7 days': '周限', 'Image generation': '生图', 'Total credits': '总额度' };
+const NAMES = { '5 hours': '5 小时', '7 days': '周限', 'Image generation': '生图', 'Total credits': '总额度', Credits: '积分' };
 const hm = (d) => d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
 function rel(iso) {
   if (!iso) return ''; const ms = new Date(iso) - Date.now(); if (ms <= 0) return '已重置';
@@ -52,53 +48,56 @@ async function call(name, args) {
     return { ok: true, result: t ? JSON.parse(t.text) : null };
   } catch (e) { return { ok: false }; }
 }
-function win(w) {
+function win(w, extra) {
   const p = left(w), q = p == null ? 0 : Math.max(0, Math.min(100, p)), low = p != null && p <= 10;
-  const amt = w.limit != null && w.amount != null ? ' · ' + w.amount + '/' + Number(w.limit).toLocaleString('en-US') : '';
   return '<div class="w' + (low ? ' low' : '') + '"><div class="t">' + esc(NAMES[w.name] || w.display || w.name) + '</div>' +
     '<div class="bar"><i style="width:' + q + '%"></i></div>' +
-    '<div class="m"><span>剩余 ' + (p == null ? '—' : Math.round(p) + '%') + esc(amt) + '</span><span class="r">' + esc(rel(w.resetsAt)) + '</span></div></div>';
+    '<div class="m"><span>剩余 ' + (p == null ? '—' : Math.round(p) + '%') + '</span><span class="r">' + esc(rel(w.resetsAt)) + '</span>' + (extra || '') + '</div></div>';
 }
-function sec(title, tag, body, extra) {
-  return '<div class="sec"><div class="hd"><b>' + esc(title) + '</b>' + (tag ? '<span class="tag">' + esc(tag) + '</span>' : '') + (extra || '') + '</div>' + body + '</div>';
-}
-function mainSec(title, d, extra) {
-  const ws = d && d.windows || [];
-  return sec(title, d && d.account, (ws.length ? ws.map(win).join('') : '<div class="note">暂无数据（Magpie 没开？）</div>') + (extra || ''), '');
-}
-function other(o) {
-  const chk = /workbuddy/i.test(o.provider) && !/ai/i.test(o.provider) ? '<button class="s" id="checkin">签到</button>' : '';
+function block(title, d, extra) {
+  const ws = (d && d.windows || []).filter((w) => !w.text);
+  const acc = '<div class="acc"><span class="id"><b>' + esc(title) + '</b>' + esc(d && d.user || d && d.account || '') + '</span>' + (d && d.plan ? '<span class="pill">' + esc(d.plan) + '</span>' : '') + '</div>';
   let body;
-  if (o.status !== 'available') body = '<div class="note">读取失败 ' + esc(o.errorText || '') + '</div>';
-  else if (!(o.windows || []).length && o.balance) body = '<div class="big">' + esc(o.balance) + '</div><div class="note">可用余额</div>';
-  else body = (o.windows || []).map(win).join('') || '<div class="note">' + esc((o.notes || [])[0] || '暂无') + '</div>';
-  return sec(o.provider, '', body, chk);
+  if (!d) body = '<div class="note">暂无数据（Magpie 没开？）</div>';
+  else if (d.status && d.status !== 'available') body = '<div class="note">读取失败 ' + esc(d.errorText || '') + '</div>';
+  else if (!ws.length && d.balance) body = '<div class="note">剩余 ' + esc(d.balance) + '</div>';
+  else body = ws.map((w, i) => win(w, i === ws.length - 1 && d.resets && d.resets.count ? '<span class="x">可用 ' + d.resets.count + ' 次</span>' : '')).join('') || '<div class="note">暂无额度信息</div>';
+  return acc + '<div class="blk">' + body + (extra || '') + '</div>';
 }
+const ctxSession = () => { const c = app.getHostContext && app.getHostContext(); return c && (c.cindy && (c.cindy.sessionId || c.cindy.input && c.cindy.input.sessionId) || c.sessionId) || undefined; };
 let armed = null;
-function cards(res) {
-  const a = res && res.accounts || [];
-  if (!a.length) return '';
-  return a.map((x) => x.each.map((c) => '<div class="row"><span>重置卡 · ' + new Date(c.until).toLocaleDateString('zh-CN') + ' 到期</span><button class="s" data-u="' + esc(x.user) + '" data-c="' + esc(c.id) + '">使用</button></div>').join('')).join('');
+function cardAct(d) {
+  const e = d && d.resets && d.resets.each || [];
+  if (!e.length) return '';
+  const c = e[0];
+  return '<div class="act"><span>重置卡 · ' + new Date(c.until).toLocaleDateString('zh-CN') + ' 到期</span><button data-u="' + esc(d.user) + '" data-c="' + esc(c.id) + '">使用一张</button></div>';
 }
-async function load() {
+async function load(force) {
   $('refresh').disabled = true;
-  const [u, c] = await Promise.all([call('magpie_usage'), call('codex_reset_cards')]);
+  const v = await call('magpie_view', { sessionId: ctxSession(), refresh: !!force });
   $('refresh').disabled = false;
-  if (!u.ok || !u.result) { $('stamp').textContent = '读取失败'; return; }
-  const R = u.result;
-  $('list').innerHTML = mainSec('Codex', R.codex, cards(c.ok ? c.result : null)) + mainSec('Gemini · Antigravity', R.antigravity) + (R.others || []).map(other).join('');
-  $('stamp').textContent = 'Magpie · 更新于 ' + hm(new Date());
+  if (!v.ok || !v.result) { $('stamp').textContent = '读取失败'; return; }
+  const R = v.result, U = R.all || {};
+  let html = '';
+  if (R.mode === 'one') {
+    html = block(R.title, R.one, R.key === 'codex' ? cardAct(R.one) : '');
+  } else {
+    html = block('Codex', U.codex, cardAct(U.codex)) + block('Gemini', U.antigravity) +
+      (U.others || []).map((o) => block(o.provider, o, /workbuddy/i.test(o.provider) && !/ai/i.test(o.provider) ? '<div class="act"><span>每日签到</span><button id="checkin">签到</button></div>' : '')).join('');
+  }
+  $('list').innerHTML = html;
+  $('stamp').textContent = (R.mode === 'one' ? '当前模型 ' + (R.model || '').split('/').pop() : '全部账号') + ' · ' + hm(new Date());
   document.querySelectorAll('[data-c]').forEach((b) => b.onclick = async () => {
-    if (armed !== b) { if (armed) { armed.textContent = '使用'; armed.classList.remove('danger'); } armed = b; b.textContent = '再点确认'; b.classList.add('danger'); return; }
+    if (armed !== b) { armed = b; b.textContent = '再点确认'; b.classList.add('danger'); return; }
     b.disabled = true; b.textContent = '使用中…';
     const r = await call('codex_use_reset_card', { user: b.dataset.u, credit: b.dataset.c });
-    b.textContent = r.ok && r.result && r.result.completed ? '已重置 ✅' : '失败'; armed = null; setTimeout(load, 1500);
+    b.textContent = r.ok && r.result && r.result.completed ? '已重置 ✅' : '失败'; armed = null; setTimeout(() => load(true), 1500);
   });
   const k = $('checkin');
-  if (k) k.onclick = async () => { k.disabled = true; k.textContent = '…'; const r = await call('workbuddy_checkin'); k.disabled = false; k.textContent = r.ok && r.result && r.result.completed ? '已签 ✅' : '失败'; };
+  if (k) k.onclick = async () => { k.disabled = true; k.textContent = '签到中…'; const r = await call('workbuddy_checkin'); k.disabled = false; k.textContent = r.ok && r.result && r.result.completed ? '已签 ✅' : '失败'; };
 }
-$('refresh').onclick = load;
+$('refresh').onclick = () => load(true);
 app.onteardown = async () => ({});
-try { await app.connect(); await load(); setInterval(load, 60000); } catch (e) { $('stamp').textContent = '页面未连接，请重新打开'; }
+try { await app.connect(); await load(false); setInterval(() => load(false), 60000); } catch (e) { $('stamp').textContent = '页面未连接，请重新打开'; }
 </script>
 </html>

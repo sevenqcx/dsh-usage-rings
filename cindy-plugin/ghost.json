@@ -5,7 +5,7 @@
   "name": "Magpie 额度圆环（Cindy 通用版）",
   "description": "主人自制，带右侧额度圆环面板，取代 Magpie Usage：读本机 Magpie 网关各账号额度（已用/剩余、重置时间、余额），自动跟随当前在用账号并叠加限流提醒；还能查看和使用 Codex 重置卡、做 WorkBuddy 签到。只和本机 Magpie 通信。",
   "whenToUse": "用户询问 Magpie 网关各账号（Claude、Codex、Kiro、Antigravity 等）还剩多少额度、何时重置、哪个账号已用尽，要用 Codex 重置卡，或要 WorkBuddy 签到时找我",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "kind": "chip",
   "entry": "main.js",
   "launch": "on-demand",
@@ -59,6 +59,21 @@
         "type": "object",
         "properties": {}
       }
+    },
+    {
+      "name": "magpie_view",
+      "description": "面板用：按当前任务所用模型返回对应账号额度；智能/免费分组或对不上时返回全部账号。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string"
+          },
+          "refresh": {
+            "type": "boolean"
+          }
+        }
+      }
     }
   ],
   "node": {
@@ -74,7 +89,7 @@
           "uri": "ui://magpie-rings/board",
           "file": "ui/page.html",
           "prefersBorder": false,
-          "initialHeight": 620
+          "initialHeight": 420
         }
       ],
       "tools": {
@@ -101,6 +116,11 @@
             "model",
             "app"
           ]
+        },
+        "magpie_view": {
+          "visibility": [
+            "app"
+          ]
         }
       }
     },
@@ -115,16 +135,8 @@
       ],
       "contributions": [
         {
-          "id": "codex",
-          "title": "◌ Codex",
-          "position": "statusbar",
-          "kind": "button",
-          "view": "board",
-          "presentation": "popover"
-        },
-        {
-          "id": "gemini",
-          "title": "◌ Gemini",
+          "id": "usage",
+          "title": "Magpie 额度",
           "position": "statusbar",
           "kind": "button",
           "view": "board",
@@ -132,5 +144,10 @@
         }
       ]
     }
+  },
+  "agent": {
+    "hostTools": [
+      "control"
+    ]
   }
 }
