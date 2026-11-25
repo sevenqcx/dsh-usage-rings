@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 3,
+  "minCindyVersion": "0.1.136",
+  "id": "magpie-usage-rings",
+  "name": "Magpie 额度圆环（Cindy 通用版）",
+  "description": "主人自制，取代 Magpie Usage：读本机 Magpie 网关各账号额度（已用/剩余、重置时间、余额），自动跟随当前在用账号并叠加限流提醒；还能查看和使用 Codex 重置卡、做 WorkBuddy 签到。只和本机 Magpie 通信。",
+  "whenToUse": "用户询问 Magpie 网关各账号（Claude、Codex、Kiro、Antigravity 等）还剩多少额度、何时重置、哪个账号已用尽，要用 Codex 重置卡，或要 WorkBuddy 签到时找我",
+  "version": "1.0.0",
+  "kind": "chip",
+  "entry": "main.js",
+  "launch": "on-demand",
+  "command": "额度",
+  "tools": [
+    {
+      "name": "magpie_usage",
+      "description": "读取本机 Magpie 网关各账号额度窗口（已用/剩余百分比、重置时间）与余额；Codex、Antigravity 跟随当前在用账号。可按 provider 过滤。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "description": "可选：只看该平台，如 codex、antigravity、claude、kiro、deepseek"
+          }
+        }
+      }
+    },
+    {
+      "name": "codex_reset_cards",
+      "description": "列出各 Codex 账号手里的重置卡（数量、每张卡 id 和有效期）。用卡前必须先调用这个。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "codex_use_reset_card",
+      "description": "用一张 Codex 重置卡把该账号额度重置。会真的消耗卡，必须先得到主人明确同意。user、credit 取自 codex_reset_cards 最新结果。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "string"
+          },
+          "credit": {
+            "type": "string",
+            "description": "卡 id"
+          }
+        },
+        "required": [
+          "user",
+          "credit"
+        ]
+      }
+    },
+    {
+      "name": "workbuddy_checkin",
+      "description": "让 Magpie 为各账号做一次 WorkBuddy 签到。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ],
+  "node": {
+    "entry": "node/worker.cjs",
+    "protocol": "json-rpc-stdio",
+    "lifecycle": "on-demand",
+    "idleTimeoutSeconds": 900
+  }
+}
