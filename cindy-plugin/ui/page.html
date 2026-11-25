@@ -3,52 +3,45 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Magpie 额度</title>
 <style>
-:root{color-scheme:dark;--bg:#2b2b2f;--card:#38383d;--line:#4a4a50;--tx:#f2f2f4;--sub:#a6a6ad;--track:#55555b;--ok:#5ec26a;--warn:#e9b949;--bad:#e5534b}
+:root{color-scheme:light dark;--bg:#fbfbf9;--tx:#1d1d1f;--sub:#86868b;--line:#e8e8e6;--track:#ececea;--fill:#6e6e70;--bad:#e5484d;--btn:#f2f2f0}
+@media (prefers-color-scheme:dark){:root{--bg:#1f1f21;--tx:#f2f2f4;--sub:#9a9aa0;--line:#333336;--track:#333336;--fill:#b8b8bc;--btn:#2a2a2d}}
 *{box-sizing:border-box}
-body{margin:0;padding:20px 22px 22px;background:var(--bg);color:var(--tx);font:14px/1.45 -apple-system,"PingFang SC",system-ui,sans-serif;min-width:520px}
-.hd{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 16px}
-.hd h2{margin:0;font-size:20px;font-weight:700}.hd .sub{color:var(--sub);font-size:13px}
-.hd button{background:none;border:0;color:var(--sub);cursor:pointer;font:inherit;padding:0 0 0 10px}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px 12px;display:flex;flex-direction:column}
-.ct{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--line)}
-.ct b{font-size:16px;font-weight:700}.ct span{color:var(--sub);font-size:13px;display:flex;align-items:center;gap:8px}
-.chk{width:30px;height:30px;border:1px solid var(--line);border-radius:7px;background:none;color:var(--tx);cursor:pointer;font-size:15px}
-.chk:disabled{opacity:.5}
-.bars{display:flex;justify-content:space-around;padding:14px 0 10px;flex:1}
-.bar{display:flex;flex-direction:column;align-items:center;min-width:70px}
-.bar .p{font-weight:700;font-size:16px;margin-bottom:8px}
-.tube{width:36px;height:84px;border-radius:6px;background:var(--track);position:relative;overflow:hidden}
-.tube i{position:absolute;left:0;right:0;bottom:0;border-radius:6px}
-.bar .n{margin-top:8px;font-size:14px}.bar .v{color:var(--sub);font-size:12.5px}
-.ft{border-top:1px solid var(--line);padding-top:9px;text-align:center;color:var(--sub);font-size:13px}
-.money{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 0}
-.money b{font-size:34px;font-weight:700}.money span{color:var(--sub)}
-.rings{display:flex;justify-content:space-around;padding:14px 0 6px}
-.ring{text-align:center;font-size:13px}.ring .n{margin-top:4px}.ring .v{color:var(--sub);font-size:12px}
-.row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
-.row button{background:none;border:1px solid var(--line);color:var(--tx);border-radius:6px;padding:3px 10px;cursor:pointer;font:inherit}
-.row button.danger{border-color:var(--bad);color:var(--bad)}
-.muted{color:var(--sub)}
+body{margin:0;padding:18px 22px 14px;background:var(--bg);color:var(--tx);font:14px/1.5 -apple-system,"PingFang SC",system-ui,sans-serif;min-width:340px;max-width:420px}
+.sec{padding:14px 0;border-bottom:1px solid var(--line)}
+.sec:last-of-type{border-bottom:0}
+.hd{display:flex;align-items:center;justify-content:space-between;color:var(--sub);font-size:13px;margin-bottom:6px}
+.hd b{color:var(--tx);font-size:14px;font-weight:600}
+.tag{border:1px solid var(--line);border-radius:999px;padding:1px 10px;font-size:12px;color:var(--sub)}
+.w{margin-top:10px}
+.w .t{font-size:15px;margin-bottom:6px}
+.w.low .t{color:var(--bad)}
+.bar{height:6px;border-radius:3px;background:var(--track);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;background:var(--fill)}
+.w.low .bar i{background:var(--bad)}
+.m{display:flex;justify-content:space-between;margin-top:6px;font-size:13px}
+.m .r{color:var(--sub)}
+.big{font-size:20px;font-weight:600;margin-top:6px}
+.note{color:var(--sub);font-size:12.5px;margin-top:6px}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px;color:var(--sub)}
+button.s{background:var(--btn);border:1px solid var(--line);color:var(--tx);border-radius:7px;padding:2px 10px;cursor:pointer;font:inherit;font-size:12.5px}
+button.s.danger{color:var(--bad);border-color:var(--bad)}
+.foot{display:flex;justify-content:space-between;color:var(--sub);font-size:12.5px;padding-top:10px;border-top:1px solid var(--line)}
+.foot button{background:none;border:0;color:var(--sub);cursor:pointer;font:inherit}
 </style>
-<div class="hd"><h2>主力模型额度</h2><span class="sub"><span id="stamp">读取中…</span><button id="refresh">刷新</button></span></div>
-<div class="grid" id="main"></div>
-<div class="hd"><h2>其他模型额度</h2><span class="sub">Magpie · 剩余比例</span></div>
-<div class="grid" id="others"></div>
+<div id="list"></div>
+<div class="foot"><span id="stamp">读取中…</span><button id="refresh">刷新</button></div>
 <script type="module">
 import { App } from '@modelcontextprotocol/ext-apps';
-const app = new App({ name: 'Magpie 额度', version: '1.2.0' }, {}, { autoResize: true });
+const app = new App({ name: 'Magpie 额度', version: '1.2.1' }, {}, { autoResize: true });
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const left = (w) => w.remaining != null ? w.remaining : (w.used != null ? 100 - w.used : null);
-const color = (p) => p == null ? 'var(--track)' : p <= 10 ? 'var(--bad)' : p <= 30 ? 'var(--warn)' : 'var(--ok)';
-const NAMES = { '5 hours': '5 小时', '7 days': '7 天', 'Image generation': '生图' };
+const NAMES = { '5 hours': '5 小时', '7 days': '周限', 'Image generation': '生图', 'Total credits': '总额度' };
 const hm = (d) => d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
-const md = (iso) => { const d = new Date(iso); return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + hm(d); };
 function rel(iso) {
   if (!iso) return ''; const ms = new Date(iso) - Date.now(); if (ms <= 0) return '已重置';
   const h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000);
-  return (h >= 24 ? Math.floor(h / 24) + '天' + (h % 24) + '时' : h + '时' + m + '分') + '后重置';
+  return (h >= 24 ? Math.floor(h / 24) + '天 ' + (h % 24) + '小时' : h ? h + '小时 ' + m + '分钟' : m + '分钟') + '后重置';
 }
 async function call(name, args) {
   try {
@@ -59,56 +52,50 @@ async function call(name, args) {
     return { ok: true, result: t ? JSON.parse(t.text) : null };
   } catch (e) { return { ok: false }; }
 }
-function ring(w) {
-  const p = left(w), c = 2 * Math.PI * 30, off = p == null ? c : c * (1 - Math.max(0, p) / 100);
-  return '<div class="ring"><svg width="76" height="76" viewBox="0 0 72 72"><circle cx="36" cy="36" r="30" fill="none" stroke="#55555b" stroke-width="7"/>' +
-    '<circle cx="36" cy="36" r="30" fill="none" stroke="' + color(p) + '" stroke-width="7" stroke-linecap="round" stroke-dasharray="' + c + '" stroke-dashoffset="' + off + '" transform="rotate(-90 36 36)"/>' +
-    '<text x="36" y="41" text-anchor="middle" font-size="15" font-weight="700" fill="#f2f2f4">' + (p == null ? '—' : Math.round(p) + '%') + '</text></svg>' +
-    '<div class="n">' + esc(NAMES[w.name] || w.name) + '</div><div class="v">' + esc(rel(w.resetsAt)) + '</div></div>';
+function win(w) {
+  const p = left(w), q = p == null ? 0 : Math.max(0, Math.min(100, p)), low = p != null && p <= 10;
+  const amt = w.limit != null && w.amount != null ? ' · ' + w.amount + '/' + Number(w.limit).toLocaleString('en-US') : '';
+  return '<div class="w' + (low ? ' low' : '') + '"><div class="t">' + esc(NAMES[w.name] || w.display || w.name) + '</div>' +
+    '<div class="bar"><i style="width:' + q + '%"></i></div>' +
+    '<div class="m"><span>剩余 ' + (p == null ? '—' : Math.round(p) + '%') + esc(amt) + '</span><span class="r">' + esc(rel(w.resetsAt)) + '</span></div></div>';
 }
-const now = () => hm(new Date());
-function ringCard(title, data, extra) {
-  const ws = data && data.windows || [];
-  return '<div class="card"><div class="ct"><b>' + esc(title) + '</b><span>' + esc(data && data.account || '') + '</span></div>' +
-    (ws.length ? '<div class="rings">' + ws.map(ring).join('') + '</div>' : '<div class="money"><span>暂无数据（Magpie 没开？）</span></div>') + (extra || '') + '</div>';
+function sec(title, tag, body, extra) {
+  return '<div class="sec"><div class="hd"><b>' + esc(title) + '</b>' + (tag ? '<span class="tag">' + esc(tag) + '</span>' : '') + (extra || '') + '</div>' + body + '</div>';
 }
-function barCard(o) {
-  const name = esc(o.provider), t = now();
-  const chk = /workbuddy/i.test(o.provider) && !/ai/i.test(o.provider) ? '<button class="chk" id="checkin" title="WorkBuddy 签到">✓</button>' : '';
-  const head = '<div class="ct"><b>' + name + '</b><span>' + t + chk + '</span></div>';
-  if (o.status !== 'available') return '<div class="card">' + head + '<div class="money"><span>读取失败</span></div><div class="ft">' + esc(o.errorText || '') + '</div></div>';
-  const ws = o.windows || [];
-  if (!ws.length && o.balance) return '<div class="card">' + head + '<div class="money"><b>' + esc(o.balance) + '</b><span>可用余额</span></div><div class="ft">余额计费</div></div>';
-  const bars = ws.map((w) => { const p = left(w), q = p == null ? 0 : Math.max(0, Math.min(100, p));
-    return '<div class="bar"><div class="p">' + (p == null ? '—' : Math.round(p) + '%') + '</div><div class="tube"><i style="height:' + q + '%;background:' + color(p) + '"></i></div>' +
-      '<div class="n">' + esc(w.display || w.name) + '</div><div class="v">' + esc(w.limit != null ? (w.amount != null ? w.amount : '?') + '/' + Number(w.limit).toLocaleString('en-US') + (w.unit && !/credit|积分/i.test(w.unit) ? '' : '') : '') + '</div></div>'; }).join('');
-  const r = ws.find((w) => w.resetsAt);
-  const ft = r ? md(r.resetsAt) + ' 重置' : (o.balance ? '余额 ' + esc(o.balance) : (o.notes || [])[0] || '');
-  return '<div class="card">' + head + '<div class="bars">' + bars + '</div><div class="ft">' + esc(ft) + '</div></div>';
+function mainSec(title, d, extra) {
+  const ws = d && d.windows || [];
+  return sec(title, d && d.account, (ws.length ? ws.map(win).join('') : '<div class="note">暂无数据（Magpie 没开？）</div>') + (extra || ''), '');
+}
+function other(o) {
+  const chk = /workbuddy/i.test(o.provider) && !/ai/i.test(o.provider) ? '<button class="s" id="checkin">签到</button>' : '';
+  let body;
+  if (o.status !== 'available') body = '<div class="note">读取失败 ' + esc(o.errorText || '') + '</div>';
+  else if (!(o.windows || []).length && o.balance) body = '<div class="big">' + esc(o.balance) + '</div><div class="note">可用余额</div>';
+  else body = (o.windows || []).map(win).join('') || '<div class="note">' + esc((o.notes || [])[0] || '暂无') + '</div>';
+  return sec(o.provider, '', body, chk);
 }
 let armed = null;
-function cardsHtml(res) {
+function cards(res) {
   const a = res && res.accounts || [];
-  if (!a.length) return '<div class="ft">' + (res && res.error ? '重置卡读取失败' : '没有重置卡') + '</div>';
-  return '<div class="ft" style="text-align:left">' + a.map((x) => x.each.map((c) =>
-    '<div class="row"><span>重置卡 · ' + esc(x.user) + ' · ' + new Date(c.until).toLocaleDateString('zh-CN') + ' 到期</span><button data-u="' + esc(x.user) + '" data-c="' + esc(c.id) + '">用这张</button></div>').join('')).join('') + '</div>';
+  if (!a.length) return '';
+  return a.map((x) => x.each.map((c) => '<div class="row"><span>重置卡 · ' + new Date(c.until).toLocaleDateString('zh-CN') + ' 到期</span><button class="s" data-u="' + esc(x.user) + '" data-c="' + esc(c.id) + '">使用</button></div>').join('')).join('');
 }
 async function load() {
   $('refresh').disabled = true;
   const [u, c] = await Promise.all([call('magpie_usage'), call('codex_reset_cards')]);
   $('refresh').disabled = false;
   if (!u.ok || !u.result) { $('stamp').textContent = '读取失败'; return; }
-  $('main').innerHTML = ringCard('Codex', u.result.codex, cardsHtml(c.ok ? c.result : { error: true })) + ringCard('Gemini · Antigravity', u.result.antigravity);
-  $('others').innerHTML = (u.result.others || []).map(barCard).join('') || '<span class="muted">暂无</span>';
-  $('stamp').textContent = '更新于 ' + now();
+  const R = u.result;
+  $('list').innerHTML = mainSec('Codex', R.codex, cards(c.ok ? c.result : null)) + mainSec('Gemini · Antigravity', R.antigravity) + (R.others || []).map(other).join('');
+  $('stamp').textContent = 'Magpie · 更新于 ' + hm(new Date());
   document.querySelectorAll('[data-c]').forEach((b) => b.onclick = async () => {
-    if (armed !== b) { if (armed) { armed.textContent = '用这张'; armed.classList.remove('danger'); } armed = b; b.textContent = '再点确认'; b.classList.add('danger'); return; }
+    if (armed !== b) { if (armed) { armed.textContent = '使用'; armed.classList.remove('danger'); } armed = b; b.textContent = '再点确认'; b.classList.add('danger'); return; }
     b.disabled = true; b.textContent = '使用中…';
     const r = await call('codex_use_reset_card', { user: b.dataset.u, credit: b.dataset.c });
     b.textContent = r.ok && r.result && r.result.completed ? '已重置 ✅' : '失败'; armed = null; setTimeout(load, 1500);
   });
   const k = $('checkin');
-  if (k) k.onclick = async () => { k.disabled = true; k.textContent = '…'; const r = await call('workbuddy_checkin'); k.disabled = false; k.textContent = r.ok && r.result && r.result.completed ? '✅' : '✕'; };
+  if (k) k.onclick = async () => { k.disabled = true; k.textContent = '…'; const r = await call('workbuddy_checkin'); k.disabled = false; k.textContent = r.ok && r.result && r.result.completed ? '已签 ✅' : '失败'; };
 }
 $('refresh').onclick = load;
 app.onteardown = async () => ({});

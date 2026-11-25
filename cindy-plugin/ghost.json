@@ -5,7 +5,7 @@
   "name": "Magpie 额度圆环（Cindy 通用版）",
   "description": "主人自制，带右侧额度圆环面板，取代 Magpie Usage：读本机 Magpie 网关各账号额度（已用/剩余、重置时间、余额），自动跟随当前在用账号并叠加限流提醒；还能查看和使用 Codex 重置卡、做 WorkBuddy 签到。只和本机 Magpie 通信。",
   "whenToUse": "用户询问 Magpie 网关各账号（Claude、Codex、Kiro、Antigravity 等）还剩多少额度、何时重置、哪个账号已用尽，要用 Codex 重置卡，或要 WorkBuddy 签到时找我",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "kind": "chip",
   "entry": "main.js",
   "launch": "on-demand",
@@ -74,7 +74,7 @@
           "uri": "ui://magpie-rings/board",
           "file": "ui/page.html",
           "prefersBorder": false,
-          "initialHeight": 560
+          "initialHeight": 620
         }
       ],
       "tools": {
