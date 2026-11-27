@@ -266,3 +266,10 @@ test('OtherQuotas renders per-platform cards with vertical bar columns and balan
   assert.match(text, /可用余额/)
   assert.match(text, /余额计费/)
 })
+
+test('dark mode styles follow DSH body[data-ds-dark-theme] instead of OS prefers-color-scheme', async () => {
+  const source = await readFile(new URL('./client.js', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /@media\s*\(prefers-color-scheme:\s*dark\)/, 'use body[data-ds-dark-theme] so dark mode follows DSH rather than OS')
+  assert.match(source, /body\[data-ds-dark-theme\]\s+\.ur-panel/)
+  assert.match(source, /body\[data-ds-dark-theme\]\s+\.ur-oq-card/)
+})
