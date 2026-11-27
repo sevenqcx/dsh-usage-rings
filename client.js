@@ -232,8 +232,8 @@ body[data-ds-dark-theme] .ur-panel{--ap-label:rgba(255,255,255,.92);--ap-sec:rgb
 .ur-vcol-pct{position:relative}
 .ur-oq-reset{line-height:16px}
 body[data-ds-dark-theme] .ur-oq-card{box-shadow:0 0 0 1px rgba(255,255,255,.08),0 8px 32px -6px rgba(0,0,0,.5)}
-body[data-ds-dark-theme] .ur-vcol,body[data-ds-dark-theme] .ur-oq-switch{background:rgba(255,255,255,.05)}
-body[data-ds-dark-theme] .ur-vcol:hover,body[data-ds-dark-theme] .ur-oq-switch:hover{background:rgba(255,255,255,.08)}
+body[data-ds-dark-theme] .ur-oq-switch{background:rgba(255,255,255,.05)}
+body[data-ds-dark-theme] .ur-oq-switch:hover{background:rgba(255,255,255,.08)}
 body[data-ds-dark-theme] .ur-oq-switch-idx{box-shadow:0 1px 1px rgba(0,0,0,.24),inset 0 0 0 1px rgba(255,255,255,.06)}
 @media (prefers-reduced-motion:reduce){.ur-vcol-fill{animation:none;transition:none}}
 .ur-reset-cards{border-top:1px solid var(--dsw-alias-border-l2);margin-top:12px;padding-top:10px}

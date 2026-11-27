@@ -272,6 +272,7 @@ test('dark mode styles follow DSH body[data-ds-dark-theme] instead of OS prefers
   assert.doesNotMatch(source, /@media\s*\(prefers-color-scheme:\s*dark\)/, 'use body[data-ds-dark-theme] so dark mode follows DSH rather than OS')
   assert.match(source, /body\[data-ds-dark-theme\]\s+\.ur-panel/)
   assert.match(source, /body\[data-ds-dark-theme\]\s+\.ur-oq-card/)
+  assert.doesNotMatch(source, /body\[data-ds-dark-theme\]\s+\.ur-vcol(?:\b|:)/, 'quota rows must retain their transparent background in dark mode, including hover and expanded states')
 })
 
 test('overview cards: multi-account header line, fixed height when collapsed, waterfall when expanded', async () => {
