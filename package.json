@@ -1,6 +1,6 @@
 {
   "name": "dsh-usage-rings",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "type": "module",
   "description": "替换底栏统计区为上下文、缓存命中、Tok/s 与本会话模型用量面板，并展示来自本地 Magpie 网关（127.0.0.1:3425）的 Codex、Gemini 额度环及多平台柱状表。",
   "license": "MIT",

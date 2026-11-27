@@ -273,3 +273,11 @@ test('dark mode styles follow DSH body[data-ds-dark-theme] instead of OS prefers
   assert.match(source, /body\[data-ds-dark-theme\]\s+\.ur-panel/)
   assert.match(source, /body\[data-ds-dark-theme\]\s+\.ur-oq-card/)
 })
+
+test('overview cards: multi-account header line, fixed height when collapsed, waterfall when expanded', async () => {
+  const src = await readFile(new URL('./client.js', import.meta.url), 'utf8');
+  assert.match(src, /个账号使用中/, 'merged accounts must show a count line under the title, like other cards');
+  assert.doesNotMatch(src, /key: 'lowacct'/, 'per-account low notes must not sit below the bars; fold them into the header line');
+  assert.match(src, /\.ur-oq-grid\{grid-auto-rows:1fr\}/, 'collapsed cards must share one height');
+  assert.match(src, /\.ur-oq-grid\.ur-oq-open\{display:flex/, 'an expanded card must switch the grid to independent columns');
+});

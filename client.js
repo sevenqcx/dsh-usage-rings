@@ -339,6 +339,9 @@ body[data-ds-dark-theme] .ur-oq-switch-idx{box-shadow:0 1px 1px rgba(0,0,0,.24),
 .ur-vcol-pct{grid-area:pct;justify-self:end;text-align:right;line-height:1}
 /* smaller check-in button */.ur-oq-head .ur-checkin,.ur-checkin{width:16px;height:16px;min-width:0;min-height:0;padding:0;flex:none;border-radius:8px;font-size:9px;line-height:16px;align-self:center}
 /* align first quota row across cards: header always reserves title+account height; rows start at top */.ur-oq-head{min-height:40px;align-content:flex-start}.ur-oq-bars{justify-content:flex-start}
+/* balance card: amount starts where quota rows start, not pushed to the bottom */.ur-oq-balance{flex:0 0 auto;justify-content:flex-start;padding:0;margin-top:12px}
+/* uniform cards: every row as tall as the tallest; in-card notes stay on one line */.ur-oq-grid{grid-auto-rows:1fr}
+/* an expanded card switches the grid to a waterfall: each card keeps its own height */.ur-oq-grid.ur-oq-open{display:flex;align-items:flex-start;gap:12px}.ur-oq-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}@media (max-width:460px){.ur-oq-grid.ur-oq-open{flex-direction:column;align-items:stretch}.ur-oq-col{display:contents}}.ur-oq-card .ur-note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 `;
 
     const percentOf = (win) => {
@@ -1350,8 +1353,8 @@ body[data-ds-dark-theme] .ur-oq-switch-idx{box-shadow:0 1px 1px rgba(0,0,0,.24),
           !Array.isArray(records) ? h('div', { className: 'ur-note' }, requestState === 'error' ? '额度读取失败' : '其他额度暂不可用') :
           records.length === 0 ? h('div', { className: 'ur-note' }, '暂未发现其他额度') :
           [
-          h('div', { key: 'grid', className: groups.length === 1 ? 'ur-oq-grid ur-oq-single' : 'ur-oq-grid' },
-            groups.map((group, index) => {
+          h('div', { key: 'grid', className: [groups.length === 1 ? 'ur-oq-grid ur-oq-single' : 'ur-oq-grid', Object.values(openCards).some(Boolean) ? 'ur-oq-open' : ''].filter(Boolean).join(' ') },
+            ((cards) => Object.values(openCards).some(Boolean) && groups.length > 1 ? [0, 1].map((c) => h('div', { className: 'ur-oq-col', key: `col-${c}` }, cards.filter((_, i) => i % 2 === c))) : cards)(groups.map((group, index) => {
               const count = group.items.length;
               const pos = Math.min(picked[group.provider] ?? 0, count - 1);
               const record = group.items[pos];
@@ -1366,14 +1369,14 @@ body[data-ds-dark-theme] .ur-oq-switch-idx{box-shadow:0 1px 1px rgba(0,0,0,.24),
               const readTime = record.readAt ? formatReset(record.readAt) : '';
               const resetTimes = [...new Set(barItems.map(({ win }) => formatReset(win.resetsAt)).filter(Boolean))];
               const sharedReset = resetTimes.length === 1 ? resetTimes[0] : '';
-              return h('div', { className: 'ur-oq-card', key: `${record.provider}-${index}-${pos}`, style: { animationDelay: `${index * 50}ms` } },
+              return h('div', { className: 'ur-oq-card', key: `${record.provider}-${index}-${pos}`, style: { animationDelay: `${index * 50}ms`, order: index } },
                 h('div', { className: 'ur-oq-head' },
                   h('span', { className: 'ur-oq-title', title: readTime ? `读取于 ${readTime}` : undefined }, providerLabel(record.provider)),
                   (() => {
                     // Alias (user-chosen in Magpie) first, masked account as fallback; same slot for 1 or N accounts.
                     const label = record.alias || record.account || (count > 1 ? `账号 ${pos + 1}` : '');
                     const tip = [record.alias, record.account].filter(Boolean).join(' · ');
-                    if (mergeBars) return null;
+                    if (mergeBars) return h('span', { className: 'ur-oq-account', title: group.items.map((it) => [it.alias, it.account].filter(Boolean).join(' · ')).filter(Boolean).join('\n') || undefined }, `${count} 个账号使用中${lowAccts.length ? ` · ${lowAccts.length} 个快用完` : ''}`);
                     if (count === 1) return label ? h('span', { className: 'ur-oq-account', title: tip || undefined }, label) : null;
                     return h('button', {
                       type: 'button', className: 'ur-oq-switch',
@@ -1427,12 +1430,11 @@ body[data-ds-dark-theme] .ur-oq-switch-idx{box-shadow:0 1px 1px rgba(0,0,0,.24),
                                 remainText ? h('span', { className: 'ur-vcol-sub' }, remainText) : null,
                                 !sharedReset && resetText ? h('span', { className: 'ur-vcol-reset' }, (win.expires ? String(resetLabel(win.resetsAt)).replace('重置', '到期') : resetLabel(win.resetsAt))) : null);
                             })),
-                          (!openCards[record.provider] && lowAccts.length) ? h('div', { className: 'ur-note ur-expire', key: 'lowacct' }, lowAccts.map(({ label, win }) => `${label} 剩 ${formatPercent(win.remaining ?? 100 - win.used)}`).join(' · ')) : null,
-                          (() => { const tw = (record.windows || []).find((w) => /^(total\b|总)/i.test(w.name || '')); if (!tw || !tw.resetsAt) return null; const ms = new Date(tw.resetsAt).getTime() - Date.now(); const pct = tw.remaining ?? (tw.used == null ? null : 100 - tw.used); if (!(ms > 0 && ms <= 48 * 3600e3) || pct === null || pct < 30) return null; const left = Number.isFinite(tw.amount) && Number.isFinite(tw.limit) ? `${Math.max(0, +(tw.limit - tw.amount).toFixed(2))}${typeof tw.unit === 'string' ? unitLabel(tw.unit) : ''}` : formatPercent(pct); return h('div', { className: 'ur-note ur-expire', key: 'expire' }, `额度快过期了，还剩 ${left}`); })(),
+                                                    (() => { const tw = (record.windows || []).find((w) => /^(total\b|总)/i.test(w.name || '')); if (!tw || !tw.resetsAt) return null; const ms = new Date(tw.resetsAt).getTime() - Date.now(); const pct = tw.remaining ?? (tw.used == null ? null : 100 - tw.used); if (!(ms > 0 && ms <= 48 * 3600e3) || pct === null || pct < 30) return null; const left = Number.isFinite(tw.amount) && Number.isFinite(tw.limit) ? `${Math.max(0, +(tw.limit - tw.amount).toFixed(2))}${typeof tw.unit === 'string' ? unitLabel(tw.unit) : ''}` : formatPercent(pct); return h('div', { className: 'ur-note ur-expire', key: 'expire' }, `额度快过期了，还剩 ${left}`); })(),
                           sharedReset ? h('div', { className: 'ur-oq-reset', key: 'reset' }, resetLabel((record.windows || []).find((w) => formatReset(w.resetsAt) === sharedReset)?.resetsAt)) : null,
                         ]
                       : h('div', { className: 'ur-note' }, '未提供额度明细'));
-            }))],
+            })))],
           requestState === 'error' ? h('div', { className: 'ur-foot' }, '刷新失败，显示上次读取。') : null), document.body) : null);
     }
 
